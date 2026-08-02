@@ -74,7 +74,33 @@ class Block(nn.Module):
         return self.fuse(self.conv(x) + x)
 
 
-def build_decoder():
+class TAESDDecoder(nn.Module):
+    """diffusers 的 DecoderTiny 在 layers 外面还有一层区间变换：出来 .mul(2).sub(1)。
+
+    原始 taesd 仓库的 nn.Sequential 没有这一层——照抄它会与 diffusers 差 1.38
+    （之前所有画质数字都是走 diffusers 得到的，必须对齐它）。
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.layers = build_decoder_layers()
+
+    def forward(self, x):
+        return self.layers(x).mul(2).sub(1)
+
+
+class TAESDEncoder(nn.Module):
+    """对应 EncoderTiny：进 layers 之前先 x.add(1).div(2)。"""
+
+    def __init__(self):
+        super().__init__()
+        self.layers = build_encoder_layers()
+
+    def forward(self, x):
+        return self.layers(x.add(1).div(2))
+
+
+def build_decoder_layers():
     return nn.Sequential(
         Clamp(), nn.Conv2d(4, 64, 3, padding=1), nn.ReLU(inplace=True),
         Block(), Block(), Block(), nn.Upsample(scale_factor=2), nn.Conv2d(64, 64, 3, padding=1, bias=False),
@@ -83,7 +109,7 @@ def build_decoder():
         Block(), nn.Conv2d(64, 3, 3, padding=1))
 
 
-def build_encoder():
+def build_encoder_layers():
     return nn.Sequential(
         nn.Conv2d(3, 64, 3, padding=1), Block(),
         nn.Conv2d(64, 64, 3, padding=1, stride=2, bias=False), Block(), Block(), Block(),
@@ -156,8 +182,10 @@ def main():
     torch.backends.cudnn.benchmark = True
     ep, dp = find_taesd(a.taesd_dir)
 
-    enc = load_into(build_encoder(), load_safetensors(ep)).to(dev, dt).eval()
-    dec = load_into(build_decoder(), load_safetensors(dp)).to(dev, dt).eval()
+    enc, dec = TAESDEncoder(), TAESDDecoder()
+    load_into(enc.layers, load_safetensors(ep))
+    load_into(dec.layers, load_safetensors(dp))
+    enc, dec = enc.to(dev, dt).eval(), dec.to(dev, dt).eval()
     print("权重加载完成（key 逐条严格匹配）")
 
     x = torch.rand(1, 3, 512, 512, device=dev, dtype=dt) * 2 - 1
@@ -195,8 +223,9 @@ def main():
         rows.append(("  + channels_last encode", bench(lambda: enc_cl(xc))))
         rows.append(("  + channels_last decode", bench(lambda: dec_cl(zc))))
 
-        folded, nf = fold_decoder(dec_cl, True)
-        folded = folded.to(dev, dt)
+        folded_layers, nf = fold_decoder(dec_cl.layers, True)
+        dec_cl.layers = folded_layers.to(dev, dt)
+        folded = dec_cl
         err = (dec_cl(zc).float() - folded(zc).float()).abs().max()
         print("上采样折叠 %d 处，与折叠前最大绝对差 %.2e" % (nf, err))
         rows.append(("  + 上采样折叠 decode", bench(lambda: folded(zc))))
