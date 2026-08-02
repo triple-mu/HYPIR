@@ -11,3 +11,9 @@ __pycache__
 /.cog
 /output.png
 /results
+
+# CSIG: 权重/数据/输出不进 git（在机器的 /root/.cache/huggingface/csig 下）
+*.pth
+*.safetensors
+*.parquet
+submit/*/weights/

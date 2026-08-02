@@ -1,0 +1,94 @@
+# CSIG-2026 赛道二 · 工作区说明
+
+本 fork 在上游 HYPIR（`b61d107`）之上加了 CSIG-2026 的全部工作。分支 `csig-2026`。
+**权重与数据不进 git**（见 §5），只放代码、配置与结论文档。
+
+---
+
+## 1. 目录
+
+| 目录 | 内容 |
+|---|---|
+| `HYPIR/` | 上游代码 + 我们的改动（见 §2），所有改动都带 `[csig-speedup]` / `[csig-compile]` 标记 |
+| `configs/csig_train.yaml` | 训练配置 |
+| `csig/` | **训练与数据管线**：退化配方、评估、数据准备、看门狗、环境脚本 |
+| `submit/` | **推理提交版**（单文件 runner，只依赖 torch），见 §3 |
+| `analysis/` | 一次性的分析脚本（赛题逆向、取证、数据源调研），**不参与训练** |
+| `docs/` | 结论文档，见 §4 |
+
+## 2. 对上游 HYPIR 的改动
+
+**数据管线**（`HYPIR/dataset/csig.py`，替换 RealESRGAN）
+- 退化按实测重建：真实 LQ **无噪声**（σ 0.014–0.090 灰阶）、恒 q95、重尾各向异性核，
+  感知强度约 **7× 重采样**而非此前认为的 2×。原版一半样本带 σ≤30 强噪，
+  模型学到的激进降噪在无噪输入上只会吃掉细节。
+- 解码搬 GPU：worker 只读字节（0.01 ms/张），nvJPEG 批量解码+裁剪（batch 24 时 3.5 ms/张）。
+  原版 CPU 全解 4K 图 100 ms/张，4 worker 仅 27 样本/秒，是硬瓶颈。
+
+**训练加速**（`HYPIR/trainer/{base,sd2}.py`、`HYPIR/utils/{ema,compile_patch}.py`）
+- `torch.compile`：G / vae.encoder+decoder / net_lpips / D.model.encode_image
+- D 步复用 G 步输出，不再重跑 `forward_generator`（G/D 交替更新，D 无条件不需配对）
+- 固定 prompt 的 text embedding 缓存（省每步一次 340M CLIP 前向）
+- EMA 换 `torch._foreach_lerp_`（21 ms → 0.85 ms/步）
+- 关梯度检查点、fused AdamW、DDP `gradient_as_bucket_view`
+- 支持从已发布的 `HYPIR_sd2.pth` / `HYPIR_sd2_D.safetensors` 续训
+
+**几条踩过的坑，改前务必先读**
+- `unwrap_model` 必须 `keep_torch_compile=False` —— 否则 ckpt/EMA 的 key 多出
+  `_orig_mod.` 前缀，**resume 静默失效不报错**
+- **不要开 `static_graph=True`** —— 首步是 G 步，此时 D 全部 `requires_grad=False`，
+  会被永久标记「不产生梯度」，之后所有 D 步都不 allreduce，两卡各练各的，不报错
+- **不要开 `channels_last`** —— 实测 VAE encode 慢 25%、UNet 前反慢 19%
+- `open_clip==2.31.0` / `timm==1.0.15` 必须 pin：新版改了 ConvNext 特征抽取，
+  判别器 decoder 的通道数对不上。这两个只服务判别器骨干
+
+## 3. `submit/` 推理提交版
+
+赛题要求提交 `model_dir/{模型文件, runner.py}`。两份实现：
+
+| | 基座 | 说明 |
+|---|---|---|
+| `submit/hypir/` | SD2.1 + HYPIR LoRA | **当前主线**。内联了 SD2.1 全部定义（CLIP tokenizer/text encoder/UNet/VAE），依赖 torch + numpy + yaml + `csig_ops`（Triton） |
+| `submit/moebius/` | Moebius 0.22B | 参考实现。只依赖 torch，无 tokenizer（条件是常量 ID 表，导出期已吸收）。CPU float64 逐层对拍 **296.6 dB** 通过 |
+
+两者接口一致：`Runner(model_dir)` / `infer(image_tensor, prompt="")` / `enhance(image_tensor)`。
+`infer` 吃 512×512 分块，`enhance` 吃整图、滑窗后逐块回调 `infer`。
+
+⚠️ **尚未做 `torch.jit` 导出**（说明.md 第 2 条要求）。需 py3.9 + 目标 torch 版本环境，
+因为用新版导出的 `.pt` 在评测机上很可能 load 失败。
+
+## 4. `docs/` 结论文档
+
+| 文件 | 要点 |
+|---|---|
+| `FINDINGS-赛题逆向.md` | **评分公式已解出**：`综合分 = 感知分 × 加速比^0.204`（画质线性进分，速度只有 0.2 次方）。任务本质是伪装成 1× 的盲超分。只有 TOPIQ-FR + MANIQA 可信 |
+| `FINDINGS-Moebius移植.md` | 单文件移植、等价性验证、画质天花板（GT p_rel 8.34，现基线只吃到 22.5%） |
+| `csig/README.md` | 数据集复现：三闸门标定、各源实测产出、许可与法律红线 |
+
+## 5. 不在 git 里的东西（在机器上）
+
+```
+/root/.cache/huggingface/csig/          （容器内路径，宿主机 /data04/cache/huggingface/csig）
+├── weights/     SD2.1-base + HYPIR_sd2.pth + _D.safetensors      6 GB
+├── data/        4klsdb_hr 5683 / pd12m_hr 9249 / hdrplus 3640 /
+│                shopsign_hr 288 / eval_p0 177对 / lists/         114 GB
+├── out/         训练输出与 checkpoint
+└── logs/
+```
+
+两台机器（hyper00 / hyper01）都有同一份，已打通免密直连（同私网，实测 ~800 MB/s）。
+
+## 6. 常用命令
+
+```bash
+# 训练（看门狗自动选空闲 GPU，被杀后从最近 checkpoint 续训）
+cd /workspace/csig/HYPIR && NGPU=4 bash csig/run_train.sh
+
+# 评估某份权重（177 对 held-out，指标是保留增益）
+source csig/env.sh && python csig/eval_p0.py $CSIG/out/p3_main/checkpoint-N/ema_state_dict.pth
+
+# 重建数据集
+bash csig/run_all.sh /path/to/data_root
+```
+
+**评估刻度**：未微调 HYPIR **19.0%** → P2（换退化配方 + 关 sharpener）5000 步 **44.0%** / 7000 步 **45.6%**。
