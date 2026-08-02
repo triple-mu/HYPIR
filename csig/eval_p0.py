@@ -30,28 +30,45 @@ def load(p):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("weight_path")
+    ap.add_argument("weight_path", nargs="?", default=None)
     ap.add_argument("--tag", default="")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--eval-dir", default=os.path.join(CSIG, "data/eval_p0"))
+    # 用打包好的提交版 runner 而不是训练侧的 SD2Enhancer 打分。两条路径不是逐位一致的
+    # （runner 折了 temb / 融了 QKV / 折了上采样卷积，实测 PSNR 42-47 dB），
+    # 所以「打包没打坏」这件事只能用分数验证，不能用 dB 推。
+    ap.add_argument("--runner-dir", default=None, help="提交版 model_dir 路径")
     a = ap.parse_args()
 
     meta = json.load(open(os.path.join(a.eval_dir, "meta.json")))["items"]
     if a.limit:
         meta = meta[:a.limit]
 
-    en = SD2Enhancer(base_model_path=os.path.join(CSIG, "weights"), weight_path=a.weight_path,
-                     lora_modules=LORA_MODULES, lora_rank=256, model_t=200, coeff_t=200,
-                     device="cuda")
-    en.init_models()
+    if a.runner_dir:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "pkgrunner", os.path.join(a.runner_dir, "runner.py"))
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["pkgrunner"] = mod
+        sys.path.insert(0, os.path.abspath(a.runner_dir))
+        spec.loader.exec_module(mod)
+        _r = mod.Runner(a.runner_dir)
+        # runner 吃 [-1,1] 出 [-1,1]；这里统一成 [0,1] 与 SD2Enhancer 对齐
+        enhance = lambda lq: ((_r.enhance(lq * 2 - 1).float() + 1) / 2)
+    else:
+        en = SD2Enhancer(base_model_path=os.path.join(CSIG, "weights"), weight_path=a.weight_path,
+                         lora_modules=LORA_MODULES, lora_rank=256, model_t=200, coeff_t=200,
+                         device="cuda")
+        en.init_models()
+        enhance = lambda lq: en.enhance(lq, prompt=PROMPT, upscale=1, patch_size=512,
+                                        stride=256, return_type="pt")
 
     rows, per_item = {}, []
     for i, it in enumerate(meta):
         gt = load(os.path.join(a.eval_dir, "gt", it["name"]))
         lq = load(os.path.join(a.eval_dir, "lq", it["name"]))
         with torch.no_grad():
-            out = en.enhance(lq, prompt=PROMPT, upscale=1, patch_size=512, stride=256,
-                             return_type="pt").clamp(0, 1)
+            out = enhance(lq).clamp(0, 1)
         # iqa.score 吃 [-1,1]
         f_o, n_o, p_o = iqa.score(out * 2 - 1, gt * 2 - 1)
         f_l, n_l, p_l = iqa.score(lq * 2 - 1, gt * 2 - 1)
