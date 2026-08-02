@@ -411,8 +411,11 @@ class BaseTrainer:
         loss_dict = dict(D=loss_D)
         # logits = D(x) w/o sigmoid = log(p_real(x) / p_fake(x))
         with torch.no_grad():
-            real_logits = torch.tensor([logit_map.mean() for logit_map in real_logits], device=self.device).mean()
-            fake_logits = torch.tensor([logit_map.mean() for logit_map in fake_logits], device=self.device).mean()
+            # [csig-speedup] 原来是 torch.tensor([t.mean() for t in maps])：把 4 个 0 维 CUDA 张量
+            # 逐个转成 Python float，即每个 D 步 8 次 cudaStreamSynchronize，而且正好卡在
+            # D_opt.step() 后面，每步都把 CUDA 队列排空。torch.stack 全程留在 GPU 上，数值等价。
+            real_logits = torch.stack([logit_map.mean() for logit_map in real_logits]).mean()
+            fake_logits = torch.stack([logit_map.mean() for logit_map in fake_logits]).mean()
         loss_dict.update(dict(D_logits_real=real_logits, D_logits_fake=fake_logits))
         return loss_dict
 
@@ -431,27 +434,33 @@ class BaseTrainer:
                 else:
                     loss_dict = self.optimize_discriminator()
 
+                # [csig-speedup] 原来每个 loss key 都当场 .item()：G 步 4 次 + D 步 3 次，
+                # 每次都是一个硬同步。而 train_loss 直到 global_step 末尾记日志时才用得上，
+                # 中间那次同步纯粹把 G 步和 D 步串死了。改成在 GPU 上累加，末尾一次性取回。
+                _gas = self.config.gradient_accumulation_steps
                 for k, v in loss_dict.items():
-                    avg_loss = self.accelerator.gather(v.repeat(bs)).mean()
-                    if k not in train_loss:
-                        train_loss[k] = 0
-                    train_loss[k] += avg_loss.item() / self.config.gradient_accumulation_steps
+                    avg_loss = self.accelerator.gather(v.repeat(bs)).mean().detach() / _gas
+                    train_loss[k] = avg_loss if k not in train_loss else train_loss[k] + avg_loss
 
                 self.batch_count += 1
                 if self.accelerator.sync_gradients:
                     if generator_step:
                         # update EMA
                         self.ema_handler.update()
-                    state = "Generator     Step" if not generator_step else "Discriminator Step"
-                    _, _, peak = print_vram_state(None)
-                    self.pbar.set_description(f"{state}, VRAM peak: {peak:.2f} GB")
+                    # [csig-speedup] print_vram_state 会走 memory_stats()，构一个大 dict 再摊平，
+                    # 每步跑一次纯属浪费；一个 global_step（G+D 各一次）只更新一次描述。
+                    if not generator_step:
+                        _, _, peak = print_vram_state(None)
+                        self.pbar.set_description(f"VRAM peak: {peak:.2f} GB")
 
                 if self.accelerator.sync_gradients and not generator_step:
                     self.global_step += 1
                     self.pbar.update(1)
-                    log_dict = {}
-                    for k in train_loss.keys():
-                        log_dict[f"loss/{k}"] = train_loss[k]
+                    # [csig-speedup] 一个 global_step 只在这里同步一次：把所有 loss 摞成一个
+                    # 张量搬回 CPU，而不是 7 个 key 各自 .item()。
+                    _keys = list(train_loss)
+                    _vals = torch.stack([train_loss[k].float() for k in _keys]).cpu()
+                    log_dict = {f"loss/{k}": _vals[i].item() for i, k in enumerate(_keys)}
                     train_loss = {}
                     self.accelerator.log(log_dict, step=self.global_step)
                     if self.global_step % self.config.log_image_steps == 0 or self.global_step == 1:
