@@ -331,7 +331,8 @@ class BaseTrainer:
             # [csig-speedup] 供下一步 D 复用
             loss_l2 = F.mse_loss(x, self.batch_inputs.gt, reduction="mean") * self.config.lambda_l2
             loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
-            loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
+            # [csig-speedup] D 骨干是半精度，autocast 不覆盖裸调用，显式转输入
+            loss_disc = self.D(x.to(self.weight_dtype), for_G=True).mean() * self.config.lambda_gan
             loss_G = loss_l2 + loss_lpips + loss_disc
             self.accelerator.backward(loss_G)
             if self.accelerator.sync_gradients:
@@ -360,8 +361,9 @@ class BaseTrainer:
         self.G_pred = x
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)
-            loss_D_real, real_logits = self.D(gt, for_real=True, return_logits=True)
-            loss_D_fake, fake_logits = self.D(x, for_real=False, return_logits=True)
+            # [csig-speedup] 同上，D 骨干半精度，显式转输入
+            loss_D_real, real_logits = self.D(gt.to(self.weight_dtype), for_real=True, return_logits=True)
+            loss_D_fake, fake_logits = self.D(x.to(self.weight_dtype), for_real=False, return_logits=True)
             loss_D = loss_D_real.mean() + loss_D_fake.mean()
             self.accelerator.backward(loss_D)
             if self.accelerator.sync_gradients:
