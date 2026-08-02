@@ -41,20 +41,25 @@ def load_runner(model_dir):
 
 
 def build_variants(r, ops, dt):
-    """返回 {名字: (encode_fn, decode_fn)}，两端统一用「未缩放 SD latent」做接口。"""
+    """返回 {名字: (encode_fn, decode_fn)}，两端统一用「未缩放 SD latent」做接口。
+
+    必须先把原始的 bound method 抓出来再定义变体：patch() 会覆写 r.vae.decode，
+    如果 dec_sd 写成 lambda z: r.vae.decode(z)，覆写后它就会调用自己——无限递归。
+    """
     from diffusers import AutoencoderTiny
     tae = AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=dt).to(r.device).eval()
     # 探针实测的换算：z_tae = A*z_sd + B
     A, B = 0.16668, 0.01702
+    orig_enc, orig_dec = r.vae.encode_moments, r.vae.decode
 
     def enc_sd(x):
-        return ops.sample_latent(r.vae.encode_moments(x), r._tile_noise)
+        return ops.sample_latent(orig_enc(x), r._tile_noise)
 
     def enc_tae(x):
         return (tae.encode(x).latents - B) / A
 
     def dec_sd(z):
-        return r.vae.decode(z)
+        return orig_dec(z)
 
     def dec_tae(z):
         return tae.decode((z * A + B).to(dt)).sample
@@ -86,7 +91,7 @@ def patch(r, enc, dec, dt, *, taesd_enc, tae, A, B):
     else:
         r.vae.encode_moments = r._orig_encode_moments
         r.vae.sample_latent = r._orig_sample_latent
-    r.vae.decode = dec
+    r.vae.decode = dec        # dec 内部用的是 build_variants 抓好的 orig_dec，不会自递归
 
 
 def run_speed(a):
