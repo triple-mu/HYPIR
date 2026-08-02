@@ -972,11 +972,17 @@ class Runner:
         want = ops.requested(self.config["op_backend"])
         avail = ops.available(self.device)
         if want != "auto" and want not in avail:
-            # 指定的后端加载不了就退回实测选优，而不是抛错——退到次优后端只差不到 1%，
-            # 抛错则整个提交拿 0 分
-            self.backend_fallback = (f"请求的后端 {want} 不可用"
-                                     f"（CUDA_LOAD_ERROR={ops.CUDA_LOAD_ERROR}），改为 auto")
-            want = "auto"
+            # 显式指定了后端就必须拿到它，不再退回 auto。
+            #
+            # 权衡说明白：退回次优后端只损失约 1%，抛错则整个提交拿 0 分。选择抛错是
+            # 因为静默降级会让「提交的是纯 CUDA 实现」这件事变成不可验证的——
+            # 分数回来了也不知道跑的是哪条路径，没法把线上分对回具体版本。
+            # 要容错就把 config 里的 op_backend 写成 auto，语义是明确的。
+            raise RuntimeError(
+                f"csig_ops: 请求的后端 {want} 不可用，且已禁用静默降级。"
+                f" CUDA_LOAD_ERROR={ops.CUDA_LOAD_ERROR}, HAS_TRITON={ops.HAS_TRITON},"
+                f" 可用后端={avail}。"
+                f" 需要容错请把 config.yaml 的 op_backend 改成 auto。")
         cands = avail if want == "auto" else (want,)
         if self.device.type == "cuda" and set(avail) == {"pytorch"}:
             # 提交包里带了 triton 与预编译的 custom_op，两者都用不上说明环境不对：
