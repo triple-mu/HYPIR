@@ -7,7 +7,7 @@
 #   3. 从已发布的 HYPIR_sd2.pth + _D.safetensors 续训，判别器不用从零预热
 #   4. mixed_precision 用 fp16，与推理端一致（推理实测 fp16 优于 bf16：57.93 vs 43.55 dB）
 base_model_type: sd2
-output_dir: /root/.cache/huggingface/csig/out/p3_main
+output_dir: /root/.cache/huggingface/csig/out/p4_wide
 base_model_path: /root/.cache/huggingface/csig/weights
 init_generator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2.pth
 init_discriminator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2_D.safetensors
@@ -63,12 +63,17 @@ opt_kwargs:
 
 mixed_precision: fp16
 seed: 231
-# P2 实测曲线：19.0%(基线) -> 44.3%(5000步) -> 45.6%(7000步)，大头在 5000 步前
+# P4：退化配方 v2（宽支撑集）。P3 用的 v1 窄配方线上从 44.04 掉到 20.76——
+# 模型只学会求逆那一个特定算子，真实退化上保留增益 -0.1%（基线 13.5%）。
+#
+# 【本轮的评估闸门变了】P0 评估集是用 v1 退化造的，已不是有效判据。
+# 判据换成 csig/real_gate.py：赛题验证集的真实 LQ/GT 对，必须跑过基线的 13.5%。
+# P0 只作参考，不再用来选 checkpoint。
 # P3 的 EMA 到 9000 步仍在稳定爬升（44.0->44.2->44.5->45.0），未收敛。
 # （8000 步裸权重曾反超 EMA，但 9000 步掉回 43.3%——振荡，不是收敛判据。）
 # 对照 P2 在 7000 步已过峰值（裸权重 42.9%->41.9% 在退，靠 EMA 守住早期权重）。
 # 常数 lr、无调度器，续训直接从 checkpoint-8000 接着跑即可。
-max_train_steps: 16000
+max_train_steps: 8000
 gradient_accumulation_steps: 1
 # 显存实测：batch8+检查点 68.5G / batch8无检查点 80.7G / batch24无检查点 132G 就 OOM
 # [csig-speedup] 关掉：显存 52->64 GB 换 +6~10%，且是 compile 生效的前提
