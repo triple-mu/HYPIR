@@ -14,7 +14,9 @@ tenacity
 tensorboard
 pydantic
 python-dotenv
-timm
+# 必须 pin：timm 1.0.28 的 forward_intermediates 返回的中间层与 HYPIR 预期不符，
+# 导致判别器 decoder[0]（要 384 通道）拿到 768 通道
+timm==1.0.15
 einops
 safetensors
 opencv-python-headless
