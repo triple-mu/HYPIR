@@ -1,0 +1,22 @@
+# CSIG-2026 训练依赖。刻意不 pin 版本 —— 目标容器是 nvcr.io/nvidia/pytorch:26.07-py3
+# （torch 2.13+cu132 / torchvision 0.28 / triton 3.7.1 已内置，不要覆盖）。
+diffusers
+transformers
+accelerate
+peft
+lpips
+vision-aided-loss
+open_clip_torch
+omegaconf
+polars
+tenacity
+tensorboard
+pydantic
+python-dotenv
+timm
+einops
+safetensors
+opencv-python-headless
+pyarrow
+huggingface_hub
+pyiqa

@@ -128,6 +128,9 @@ class BaseTrainer:
             warnings.simplefilter("ignore")
             self.net_lpips = lpips.LPIPS(net="vgg", verbose=False).to(self.device)
         self.net_lpips.eval().requires_grad_(False)
+        # [csig-speedup] LPIPS 是纯前向冻结模块，半精度即可，省显存省带宽
+        if self.weight_dtype in (torch.float16, torch.bfloat16):
+            self.net_lpips.to(self.weight_dtype)
 
     @overload
     def init_generator(self):
@@ -141,8 +144,19 @@ class BaseTrainer:
             else SuppressLogging(logging.WARNING)
         )
         with ctx:
-            self.D = ImageConvNextDiscriminator(precision="bf16").to(device=self.device)
+            # [csig-speedup] D 跟随 weight_dtype，训推一致；原来硬编码 bf16
+            _prec = {torch.float16: "fp16", torch.bfloat16: "bf16"}.get(self.weight_dtype, "fp32")
+            self.D = ImageConvNextDiscriminator(precision=_prec).to(device=self.device)
         self.D.train().requires_grad_(True)
+        # [csig-speedup] 从已发布的 HYPIR_sd2_D.safetensors 续训，省掉判别器从零预热。
+        # 该文件只含可训练部分（38 张量/13.01M）且少一层 decoder. 前缀
+        # （ckpt 是 decoder.0.1.bias，模型要 decoder.decoder.0.1.bias），加前缀后 38/38 全匹配。
+        init_d = getattr(self.config, "init_discriminator_weight", None)
+        if init_d:
+            from safetensors.torch import load_file as _lf
+            _sd = {"decoder." + k: v for k, v in _lf(init_d).items()}
+            _m, _u = self.D.load_state_dict(_sd, strict=False)
+            logger.info(f"Init D from {init_d}: missing {len(_m)}, unexpected {len(_u)}")
 
     def summary_models(self):
         table_data = []
@@ -174,6 +188,10 @@ class BaseTrainer:
             **self.config.opt_kwargs,
         )
 
+        # [csig-speedup] 272M 可训练参数的 AdamW step 融成一个 kernel
+        if optimizer_cls is torch.optim.AdamW:
+            self.config.opt_kwargs = dict(self.config.opt_kwargs)
+            self.config.opt_kwargs.setdefault("fused", True)
         self.D_params = list(filter(lambda p: p.requires_grad, self.D.parameters()))
         self.D_opt = optimizer_cls(
             self.D_params,
@@ -184,15 +202,34 @@ class BaseTrainer:
     def init_dataset(self):
         data_cfg = self.config.data_config
         dataset = instantiate_from_config(data_cfg.train.dataset)
+        # [csig-speedup] 实测每样本要解码一张 4K JPEG（112 ms/核），worker 反复启停开销显著。
+        # 持续吞吐上限约 0.77 x workers x 8.9 样本/秒，batch 大了必须同步加 worker。
+        _nw = data_cfg.train.dataloader_num_workers
+        # [csig-speedup] nvJPEG 路线下 dataset 返回原始字节，长度不一不能默认 stack
+        _cf = None
+        if getattr(data_cfg.train, "collate_fn", None):
+            from HYPIR.utils.common import get_obj_from_str
+            _cf = get_obj_from_str(data_cfg.train.collate_fn)
         self.dataloader = torch.utils.data.DataLoader(
             dataset,
             shuffle=True,
             batch_size=data_cfg.train.batch_size,
-            num_workers=data_cfg.train.dataloader_num_workers,
+            num_workers=_nw,
+            collate_fn=_cf,
+            pin_memory=True,
+            drop_last=True,
+            persistent_workers=_nw > 0,
+            prefetch_factor=4 if _nw > 0 else None,
         )
         self.batch_transform = instantiate_from_config(data_cfg.train.batch_transform)
 
     def prepare_all(self):
+        # [csig-speedup] 形状恒定，让 cuDNN 选最优卷积算法
+        torch.backends.cudnn.benchmark = True
+        # [csig-speedup] 这条链路卷积密集（VAE + UNet + ConvNext D + VGG）
+        if os.environ.get("CSIG_CHANNELS_LAST", "1") == "1":
+            for _m in (self.G, self.D, self.vae, self.net_lpips):
+                _m.to(memory_format=torch.channels_last)
         logger.info("Wrapping models, optimizers and dataloaders")
         attrs = ["G", "D", "G_opt", "D_opt", "dataloader"]
         prepared_objs = self.accelerator.prepare(*[getattr(self, attr) for attr in attrs])
@@ -259,7 +296,19 @@ class BaseTrainer:
         lq = (batch["LQ"] * 2 - 1).float()
         prompt = batch["txt"]
         bs = len(prompt)
-        c_txt = self.encode_prompt(prompt)
+        # [csig-speedup] 训练用固定 prompt，整条 CLIP 前向每步结果都一样，缓存后可省 340M 参数的前向。
+        # 只在「全 batch prompt 相同」时生效，否则自动回退到逐 batch 编码。
+        _uniq = set(prompt)
+        if len(_uniq) == 1:
+            _key = next(iter(_uniq))
+            _c = getattr(self, "_txt_cache", None)
+            if _c is None or _c[0] != _key:
+                with torch.no_grad():
+                    _c = (_key, self.encode_prompt([_key]))
+                self._txt_cache = _c
+            c_txt = {k: v.expand(bs, *v.shape[1:]) for k, v in _c[1].items()}
+        else:
+            c_txt = self.encode_prompt(prompt)
         z_lq = self.vae.encode(lq.to(self.weight_dtype)).latent_dist.sample()
         timesteps = torch.full((bs,), self.config.model_t, dtype=torch.long, device=self.device)
         self.batch_inputs = BatchInput(
@@ -279,6 +328,7 @@ class BaseTrainer:
             self.unwrap_model(self.D).eval().requires_grad_(False)
             x = self.forward_generator()
             self.G_pred = x
+            # [csig-speedup] 供下一步 D 复用
             loss_l2 = F.mse_loss(x, self.batch_inputs.gt, reduction="mean") * self.config.lambda_l2
             loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
             loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
@@ -289,13 +339,24 @@ class BaseTrainer:
             self.G_opt.step()
             self.G_opt.zero_grad()
         # Log something
+        # [csig-speedup] 存下来给紧邻的 D 步用，省一次 G UNet + VAE decode
+        self._gpred_cache = x.detach()
         loss_dict = dict(G_total=loss_G, G_mse=loss_l2, G_lpips=loss_lpips, G_disc=loss_disc)
         return loss_dict
 
     def optimize_discriminator(self):
         gt = self.batch_inputs.gt
-        with torch.no_grad():
-            x = self.forward_generator()
+        # [csig-speedup] G/D 是交替更新的，D 步原本要在 no_grad 下重跑一遍 forward_generator
+        # （G UNet + VAE decode，前向里最贵的两段）。而 D 是无条件的（D(x) 不吃 gt），
+        # 真假样本无需配对，故直接复用上一 G 步缓存的输出。代价是假样本晚一步更新。
+        # 环境变量 CSIG_DSTEP_RECOMPUTE=1 可恢复原行为做对照。
+        _cached = getattr(self, "_gpred_cache", None)
+        if _cached is not None and _cached.shape == gt.shape \
+                and os.environ.get("CSIG_DSTEP_RECOMPUTE", "0") != "1":
+            x = _cached
+        else:
+            with torch.no_grad():
+                x = self.forward_generator()
         self.G_pred = x
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)

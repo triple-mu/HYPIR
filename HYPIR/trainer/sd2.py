@@ -52,6 +52,14 @@ class SD2Trainer(BaseTrainer):
             target_modules=target_modules,
         )
         self.G.add_adapter(G_lora_cfg)
+        # [csig-speedup] 从已发布的 HYPIR_sd2.pth 续训。该文件 key 结构与 save_model_hook
+        # 的产物完全一致（514 个 lora key，带 .default. 适配器名），strict=False 直接灌。
+        init_w = getattr(self.config, "init_generator_weight", None)
+        if init_w:
+            import torch as _t
+            _sd = _t.load(init_w, map_location="cpu", weights_only=True)
+            _m, _u = self.G.load_state_dict(_sd, strict=False)
+            logger.info(f"Init G from {init_w}: {len(_sd)} tensors, unexpected {len(_u)}")
         lora_params = list(filter(lambda p: p.requires_grad, self.G.parameters()))
         assert lora_params, "Failed to find lora parameters"
         for p in lora_params:
