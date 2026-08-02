@@ -4,6 +4,7 @@
 #   GPUS=0,1,4,5 CFG=configs/csig_train.yaml bash csig/run_train.sh
 HERE=$(cd "$(dirname "$0")" && pwd)
 source "$HERE/env.sh"
+csig_check_versions || exit 1     # 版本不对就别浪费机时，见 env.sh
 cd "$HERE/.." || exit 1
 CFG=${CFG:-configs/csig_train.yaml}
 NGPU=${NGPU:-4}
@@ -39,6 +40,7 @@ mkdir -p "$OUT" "$CSIG/logs"
 LOG=$CSIG/logs/$(basename "$OUT").log
 WD=$CSIG/logs/$(basename "$OUT")_watchdog.log
 
+FASTFAIL=0
 for i in $(seq 1 200); do
     LAST=$(ls -d "$OUT"/checkpoint-* 2>/dev/null | sed 's/.*checkpoint-//' | sort -n | tail -1)
     if [ -n "$LAST" ] && [ "$LAST" -ge "$TARGET" ]; then
@@ -51,8 +53,22 @@ for i in $(seq 1 200); do
         sed "s|^resume_from_checkpoint: .*|resume_from_checkpoint: ~|" "$CFG" > "$RUN"
     fi
     echo "[watchdog] $(date '+%F %T') 第 $i 次启动 resume=${LAST:-无} GPU=$GPUS" >> "$WD"
+    T0=$SECONDS
     env CUDA_VISIBLE_DEVICES="$GPUS" accelerate launch --num_processes "$N" \
         --mixed_precision fp16 train.py --config "$RUN" >> "$LOG" 2>&1
-    echo "[watchdog] $(date '+%F %T') 退出码 $? (最近 ckpt: ${LAST:-无})" >> "$WD"
+    RC=$?
+    ELAPSED=$((SECONDS - T0))
+    echo "[watchdog] $(date '+%F %T') 退出码 $RC，本次跑了 ${ELAPSED}s (最近 ckpt: ${LAST:-无})" >> "$WD"
+    # 起步就崩说明是配置/依赖问题，重试 200 次只是把同一个错误刷 100 分钟。
+    # 正常一次启动至少要编译 + 跑若干步，不可能 3 分钟内退出。
+    if [ "$ELAPSED" -lt 180 ]; then
+        FASTFAIL=$((FASTFAIL + 1))
+        if [ "$FASTFAIL" -ge 3 ]; then
+            echo "[watchdog] $(date '+%F %T') 连续 3 次秒退，判定为配置错误，停止。看 $LOG" >> "$WD"
+            exit 1
+        fi
+    else
+        FASTFAIL=0
+    fi
     sleep 30
 done

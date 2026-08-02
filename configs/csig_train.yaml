@@ -65,8 +65,8 @@ gradient_checkpointing: false
 max_grad_norm: 1.0
 logging_dir: logs
 report_to: tensorboard
-checkpointing_steps: 1000
-checkpoints_total_limit: 10
+checkpointing_steps: 500
+checkpoints_total_limit: 20      # 500 步一存 x 8000 步 = 16 份，别让它删掉评估曲线要用的早期档
 resume_from_checkpoint: ~
 log_image_steps: 200
 log_grad_steps: 200
