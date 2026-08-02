@@ -45,7 +45,7 @@ def main():
                      device="cuda")
     en.init_models()
 
-    rows = {}
+    rows, per_item = {}, []
     for i, it in enumerate(meta):
         gt = load(os.path.join(a.eval_dir, "gt", it["name"]))
         lq = load(os.path.join(a.eval_dir, "lq", it["name"]))
@@ -57,6 +57,9 @@ def main():
         f_l, n_l, p_l = iqa.score(lq * 2 - 1, gt * 2 - 1)
         f_g, n_g, p_g = iqa.score(gt * 2 - 1, gt * 2 - 1)
         rows.setdefault(it["cat"], []).append((f_o, n_o, p_o, f_l, n_l, p_l, p_g))
+        per_item.append({"name": it["name"], "cat": it["cat"], "fr_out": float(f_o),
+                         "nr_out": float(n_o), "p_out": float(p_o), "p_lq": float(p_l),
+                         "p_gt": float(p_g)})
         if (i + 1) % 25 == 0:
             print("  %d/%d" % (i + 1, len(meta)), flush=True)
 
@@ -87,6 +90,7 @@ def main():
                    "fr_lq": float(v[:, 3].mean()), "nr_lq": float(v[:, 4].mean()),
                    "p_lq": float(v[:, 5].mean()), "p_gt": float(v[:, 6].mean()),
                    "n": int(len(v)),
+                   "per_item": per_item,
                    "by_cat": {cat: {"n": int(len(np.array(rows[cat]))),
                                     "fr_out": float(np.array(rows[cat])[:, 0].mean()),
                                     "nr_out": float(np.array(rows[cat])[:, 1].mean()),
