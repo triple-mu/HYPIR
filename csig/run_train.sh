@@ -52,6 +52,17 @@ for i in $(seq 1 200); do
     else
         sed "s|^resume_from_checkpoint: .*|resume_from_checkpoint: ~|" "$CFG" > "$RUN"
     fi
+    # 配置和 commit 存进 $OUT，跟着 checkpoint 一起走。$CSIG/logs/run_*.yaml 会被下一轮
+    # 同名实验覆盖：P2 的配置就是这么丢的，导致它的 44.3%/45.6% 只能按步数比、
+    # 没法按样本数比（batch 多大已不可考）。评估结果离开配置就没有意义。
+    if [ ! -f "$OUT/run_config.yaml" ]; then
+        cp "$RUN" "$OUT/run_config.yaml"
+        { echo "commit: $(git rev-parse HEAD 2>/dev/null)"
+          echo "gpus: $GPUS  (num_processes=$N)"
+          echo "started: $(date '+%F %T')"
+          git status --short 2>/dev/null | sed 's/^/dirty: /'
+        } > "$OUT/run_provenance.txt"
+    fi
     echo "[watchdog] $(date '+%F %T') 第 $i 次启动 resume=${LAST:-无} GPU=$GPUS" >> "$WD"
     T0=$SECONDS
     env CUDA_VISIBLE_DEVICES="$GPUS" accelerate launch --num_processes "$N" \
