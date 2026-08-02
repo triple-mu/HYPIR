@@ -66,14 +66,16 @@ class CSIGDataset(Dataset):
     def __len__(self) -> int:
         return len(self.paths)
 
-    def __getitem__(self, idx: int) -> Dict[str, Union[torch.Tensor, str]]:
+    def __getitem__(self, idx: int) -> Dict[str, Union[bytes, str]]:
+        # 返回原始 bytes 而不是 tensor：accelerate 的 prepare(dataloader) 会把 batch 里的
+        # tensor 自动搬到 GPU，而 decode_jpeg 要求输入字节在 CPU 上。返回 bytes 可以让
+        # accelerate 直接跳过（它只递归处理 tensor），也省掉 GPU->CPU->GPU 的往返。
         for _ in range(10):     # 少量坏文件直接换一张，不让训练挂掉
             try:
                 with open(self.prefix + self.paths[idx], "rb") as f:
                     buf = f.read()
                 if len(buf) > 1024:
-                    return {"jpeg": torch.frombuffer(bytearray(buf), dtype=torch.uint8),
-                            "txt": self.prompt}
+                    return {"jpeg": buf, "txt": self.prompt}
             except Exception:
                 pass
             idx = random.randrange(len(self.paths))
@@ -81,7 +83,7 @@ class CSIGDataset(Dataset):
 
 
 def csig_collate(batch: List[Dict]) -> Dict:
-    """字节长度不一，不能 stack，保持 list 交给 nvJPEG 批量解码。"""
+    """bytes 无法 stack，保持 list；也让 accelerate 的自动设备搬运跳过它。"""
     return {"jpeg": [b["jpeg"] for b in batch], "txt": [b["txt"] for b in batch]}
 
 
@@ -99,9 +101,11 @@ class CSIGBatchTransform:
         self.jpeger = None
 
     # ---------- 解码与裁剪 ----------
-    def _decode_crop(self, bufs: List[torch.Tensor], device) -> torch.Tensor:
+    def _decode_crop(self, bufs: List[bytes], device) -> torch.Tensor:
         S = self.out_size
-        imgs = decode_jpeg(bufs, device=device, mode=ImageReadMode.RGB)
+        # decode_jpeg 要求输入张量在 CPU 上（它内部自己拷到 GPU 解码）
+        cpu_bufs = [torch.frombuffer(bytearray(b), dtype=torch.uint8) for b in bufs]
+        imgs = decode_jpeg(cpu_bufs, device=device, mode=ImageReadMode.RGB)
         crops = []
         for im in imgs:
             _, h, w = im.shape
