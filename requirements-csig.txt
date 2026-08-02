@@ -6,7 +6,8 @@ accelerate
 peft
 lpips
 vision-aided-loss
-open_clip_torch
+# 必须 pin：open_clip 3.x 改了 ConvNext 特征抽取，输出通道与判别器 decoder 对不上
+open_clip_torch==2.31.0
 omegaconf
 polars
 tenacity

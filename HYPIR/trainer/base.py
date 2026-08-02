@@ -144,9 +144,10 @@ class BaseTrainer:
             else SuppressLogging(logging.WARNING)
         )
         with ctx:
-            # [csig-speedup] D 跟随 weight_dtype，训推一致；原来硬编码 bf16
-            _prec = {torch.float16: "fp16", torch.bfloat16: "bf16"}.get(self.weight_dtype, "fp32")
-            self.D = ImageConvNextDiscriminator(precision=_prec).to(device=self.device)
+            # [csig-speedup] D 权重留 fp32，计算靠 autocast 走半精度。
+            # 不要用 precision="fp16" 转权重：D 内部的 image_mean/std 是 fp32 buffer，
+            # 归一化后再撞半精度卷积权重会类型错误。autocast 会自动处理所有转换。
+            self.D = ImageConvNextDiscriminator(precision="fp32").to(device=self.device)
         self.D.train().requires_grad_(True)
         # [csig-speedup] 从已发布的 HYPIR_sd2_D.safetensors 续训，省掉判别器从零预热。
         # 该文件只含可训练部分（38 张量/13.01M）且少一层 decoder. 前缀
@@ -330,9 +331,11 @@ class BaseTrainer:
             self.G_pred = x
             # [csig-speedup] 供下一步 D 复用
             loss_l2 = F.mse_loss(x, self.batch_inputs.gt, reduction="mean") * self.config.lambda_l2
-            loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
-            # [csig-speedup] D 骨干是半精度，autocast 不覆盖裸调用，显式转输入
-            loss_disc = self.D(x.to(self.weight_dtype), for_G=True).mean() * self.config.lambda_gan
+            # [csig-speedup] accelerate 的 autocast 只包被 prepare 过的 G，
+            # LPIPS/D 是裸调用，显式包一层让它们的卷积也走半精度
+            with self.accelerator.autocast():
+                loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
+                loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
             loss_G = loss_l2 + loss_lpips + loss_disc
             self.accelerator.backward(loss_G)
             if self.accelerator.sync_gradients:
@@ -361,9 +364,10 @@ class BaseTrainer:
         self.G_pred = x
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)
-            # [csig-speedup] 同上，D 骨干半精度，显式转输入
-            loss_D_real, real_logits = self.D(gt.to(self.weight_dtype), for_real=True, return_logits=True)
-            loss_D_fake, fake_logits = self.D(x.to(self.weight_dtype), for_real=False, return_logits=True)
+            # [csig-speedup] 同上，显式包 autocast
+            with self.accelerator.autocast():
+                loss_D_real, real_logits = self.D(gt, for_real=True, return_logits=True)
+                loss_D_fake, fake_logits = self.D(x, for_real=False, return_logits=True)
             loss_D = loss_D_real.mean() + loss_D_fake.mean()
             self.accelerator.backward(loss_D)
             if self.accelerator.sync_gradients:
