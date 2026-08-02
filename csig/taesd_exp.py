@@ -63,12 +63,30 @@ def build_variants(r, ops, dt):
                  "TAESD/SD": (enc_tae, dec_sd), "TAESD/TAESD": (enc_tae, dec_tae)}
 
 
-def patch(r, enc, dec, dt):
+def patch(r, enc, dec, dt, *, taesd_enc, tae, A, B):
+    """两条路径都要打：
+
+    - infer(512x512) 走 _infer_tile
+    - enhance(整图) 走三段独立的 tiled 流程，调的是 self.vae.{encode_moments,
+      sample_latent,decode}，**不经过 _infer_tile**
+
+    只打前者的话 enhance 会静默走原路——四种组合会输出逐位相同的图（实测 200 dB），
+    看上去像「TAESD 零画质代价」。
+    """
     def _tile(x):
         z = enc(x)
         z = r._forward_generator(z.to(dt), r._text_embed)
         return dec(z.to(dt)).float()
     r._infer_tile = _tile
+
+    if taesd_enc:
+        # TAESD 直接出 4 通道 latent，没有 moments；把 sample_latent 变成恒等
+        r.vae.encode_moments = lambda x: (tae.encode(x).latents - B) / A
+        r.vae.sample_latent = lambda m: m
+    else:
+        r.vae.encode_moments = r._orig_encode_moments
+        r.vae.sample_latent = r._orig_sample_latent
+    r.vae.decode = dec
 
 
 def run_speed(a):
@@ -76,6 +94,8 @@ def run_speed(a):
     import csig_ops as ops
     dt = r.weight_dtype
     tae, variants = build_variants(r, ops, dt)
+    r._orig_encode_moments = r.vae.encode_moments
+    r._orig_sample_latent = r.vae.sample_latent
     from torch.nn.attention import sdpa_kernel, SDPBackend
 
     x = torch.zeros(1, 3, 512, 512, dtype=dt, device=r.device)
@@ -104,7 +124,7 @@ def run_speed(a):
             enc, dec = variants[name]
             t_e = bench(lambda: enc(x))
             t_d = bench(lambda: dec(z1.to(dt)))
-            patch(r, enc, dec, dt)
+            patch(r, enc, dec, dt, taesd_enc=name.startswith('TAESD'), tae=tae, A=0.16668, B=0.01702)
             t_all = bench(lambda: r._infer_tile(x))
             out[name] = dict(encode=t_e, unet=t_unet, decode=t_d, total=t_all)
             print("%-14s %9.2f %10.2f %10.2f %10.2f" % (name, t_e, t_unet, t_d, t_all))
@@ -127,6 +147,8 @@ def run_quality(a):
     import csig_ops as ops
     dt = r.weight_dtype
     tae, variants = build_variants(r, ops, dt)
+    r._orig_encode_moments = r.vae.encode_moments
+    r._orig_sample_latent = r.vae.sample_latent
 
     def load(p):
         return torch.from_numpy(cv2.imread(p)[:, :, ::-1].copy()).permute(2, 0, 1)[None].float().cuda() / 255.
@@ -154,7 +176,7 @@ def run_quality(a):
         ref_imgs = None
         for name in CONFIGS:
             enc, dec = variants[name]
-            patch(r, enc, dec, dt)
+            patch(r, enc, dec, dt, taesd_enc=name.startswith('TAESD'), tae=tae, A=0.16668, B=0.01702)
             outs, fr, nr, po, pl, pg = [], [], [], [], [], []
             for lqp, gtp in items:
                 lq, gt = load(lqp), load(gtp)
