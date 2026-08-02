@@ -23,6 +23,13 @@ data_config:
     # 所以 num_workers 不需要大。原版 2 workers + CPU 全解码只有 14 样本/秒，是硬瓶颈。
     # batch 8 是关梯度检查点后 H200(144G) 上的实测上限：峰值 ~95 GB/卡，24 直接 OOM。
     # 4 卡 x 8 = 有效 batch 32，与 P2 曲线可比，换卡数时要同步调这里。
+    #
+    # 想加大 batch 前先读这两条：
+    # 1) 得同步调 lr_G/lr_D。GAN 训练不适用线性缩放律（G/D 的平衡对 lr 比值敏感），
+    #    实践上按 sqrt 缩放更稳：batch 32->64 时 lr 1e-5 -> 1.4e-5，且 G/D 要同比例动。
+    # 2) 先确认真的是 compute bound。曾经步时 2.65 s 里约 2 s 是 host 侧 Python 开销
+    #    （EMA 每步重建 514 次全参数字典），那种状态下加 batch 只是在摊薄一个本该删掉的
+    #    固定开销，看着吞吐翻倍，实际是掩盖 bug。修完是 0.86 s/it。
     batch_size: 8
     dataloader_num_workers: 8
     collate_fn: HYPIR.dataset.csig.csig_collate
