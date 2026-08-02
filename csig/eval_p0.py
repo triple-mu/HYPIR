@@ -79,8 +79,19 @@ def main():
     print("\n保留增益 = (p_out-p_lq)/(p_gt-p_lq)。0%=没改善, 100%=完美复原。")
     print("参考: 赛题验证集上 HYPIR 吃到 22.5%%（p=2.65, 天花板 8.34）")
     if a.tag:
+        # FR 与 NR 分量必须一起存：p 是二者的线性组合，只看 p 会漏掉「FR 涨、NR 跌、
+        # 净值持平」这种情况——两个指标反向走时，模型在往哪边跑只有分量能回答。
         json.dump({"tag": a.tag, "weight": a.weight_path,
-                   "retained": float(ret), "p_out": float(v[:, 2].mean())},
+                   "retained": float(ret), "p_out": float(v[:, 2].mean()),
+                   "fr_out": float(v[:, 0].mean()), "nr_out": float(v[:, 1].mean()),
+                   "fr_lq": float(v[:, 3].mean()), "nr_lq": float(v[:, 4].mean()),
+                   "p_lq": float(v[:, 5].mean()), "p_gt": float(v[:, 6].mean()),
+                   "n": int(len(v)),
+                   "by_cat": {cat: {"n": int(len(np.array(rows[cat]))),
+                                    "fr_out": float(np.array(rows[cat])[:, 0].mean()),
+                                    "nr_out": float(np.array(rows[cat])[:, 1].mean()),
+                                    "p_out": float(np.array(rows[cat])[:, 2].mean())}
+                              for cat in sorted(rows)}},
                   open(os.path.join(CSIG, "out", "eval_%s.json" % a.tag), "w"))
 
 
