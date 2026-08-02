@@ -5,6 +5,8 @@ coeff_t: 200
 patch_size: 512
 stride: 256
 seed: 231
+vae: taesd              # taesd / sd。V100 实测 VAE 段 61.6->5.8 ms，真实退化保留增益 13.5%->16.0%
+cuda_graph: true        # 整条 tile 捕成一张图：766 次 kernel 启动，35.9->29.9 ms，逐位相同
 op_backend: cuda        # 纯 CUDA 提交：加载不了直接抛错，不静默降级（要容错改成 auto）
 channels_last: auto   # auto = 跟随 CSIG_OP_BACKEND 选中的后端；也可写 true/false 强制
 prompt: 'A high-resolution photograph with fine natural detail: modern Chinese city high-rise buildings with glass curtain walls and tiled facades, construction cranes and shop signage, distant hills, and

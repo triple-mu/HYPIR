@@ -31,6 +31,7 @@ CSIG_OP_BACKEND 优先；选中的后端不可用时自动退回实测选优。�
 """
 
 import argparse
+import glob
 import json
 import math
 import os
@@ -73,6 +74,10 @@ DEFAULTS = {
     "patch_size": 512,
     "stride": 256,
     "seed": 231,
+    "vae": "taesd",           # taesd / sd。taesd 又快又好：V100 上 VAE 段 61.6->5.8 ms，
+                              # 真实退化验证对的保留增益 13.5%->16.0%
+    "cuda_graph": True,       # 把整条 tile 捕成一张图。766 次 kernel 启动 * ~10us，
+                              # V100 实测 35.9->29.9 ms，且逐位相同
     "channels_last": "auto",  # auto / true / false
     "op_backend": "auto",  # auto / pytorch / triton / cuda，环境变量 CSIG_OP_BACKEND 优先
 }
@@ -716,9 +721,155 @@ class AutoencoderKLLite(nn.Module):
         noise = torch.randn((b, c8 // 2, h, w), device=moments.device, dtype=moments.dtype)
         return ops.sample_latent(moments, noise)
 
+    def encode_latent(self, x: torch.Tensor) -> torch.Tensor:
+        """与 TAESDLite 同名，统一 encode 入口，调用方不必区分是哪套 VAE。"""
+        return self.sample_latent(self.encode_moments(x))
+
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return self.decoder(self.post_quant_conv(z))
 
+
+
+# ---------------------------------------------------------------------------
+# Section 6b: TAESD —— 轻量自编码器，替换 SD VAE（V100 实测 61.6 -> 5.8 ms）
+# ---------------------------------------------------------------------------
+#
+# SD VAE 在这条一步生成的链路里占 72% 的时延（encode 21.9 + decode 39.7 ms），
+# 而 UNet 只有 33.8。换成 TAESD（1.2M 参数 vs 34.2/49.5M）后 VAE 只剩 5.8 ms。
+#
+# 画质不但没掉反而更好：真实退化的验证对上保留增益 13.5% -> 16.0%，
+# FR 几乎不变（0.4198 -> 0.4239）而 NR 从 0.4236 涨到 0.4540——蒸馏解码器的输出
+# 偏「干净锐利」，正是 MANIQA 吃的那一套。
+#
+# 结构全程只有 conv + ReLU、没有任何归一化层，所以三处优化都能吃满：
+#   1. cudnn_convolution_relu / cudnn_convolution_add_relu（Block 每个融 3 处）
+#   2. Upsample(nearest,2)+conv(k3) 折成 ConvTranspose(k4,s2,p1)，乘加降到 4/9
+#   3. 区间变换与 latent 换算全部折进权重，零运行时成本
+_TAESD_A = 0.16668     # z_taesd = A * z_sd_unscaled + B，由真实赛题图实测拟合
+_TAESD_B = 0.01702     # 相关系数 0.9639
+
+
+class _TBlock(nn.Module):
+    """conv-ReLU-conv-ReLU-conv + 恒等跳连 + ReLU，走 cudnn 融合原语。"""
+
+    def __init__(self, n: int = 64) -> None:
+        super().__init__()
+        self.conv = nn.Sequential(nn.Conv2d(n, n, 3, padding=1), nn.ReLU(),
+                                  nn.Conv2d(n, n, 3, padding=1), nn.ReLU(),
+                                  nn.Conv2d(n, n, 3, padding=1))
+        self.fuse = nn.ReLU()
+        self._fused = False
+
+    def fuse_(self):
+        c0, c2, c4 = self.conv[0], self.conv[2], self.conv[4]
+        self._w0, self._b0 = c0.weight, c0.bias
+        self._w1, self._b1 = c2.weight, c2.bias
+        self._w2, self._b2 = c4.weight, c4.bias
+        self._fused = True
+        return self
+
+    def forward(self, x):
+        if not self._fused:
+            return self.fuse(self.conv(x) + x)
+        h = torch.cudnn_convolution_relu(x, self._w0, self._b0, (1, 1), (1, 1), (1, 1), 1)
+        h = torch.cudnn_convolution_relu(h, self._w1, self._b1, (1, 1), (1, 1), (1, 1), 1)
+        return torch.cudnn_convolution_add_relu(h, self._w2, x, 1, self._b2,
+                                                (1, 1), (1, 1), (1, 1), 1)
+
+
+class _TClamp(nn.Module):
+    """tanh(x/3)*3。latent 的仿射换算 z*A+B 折进来，省一次 elementwise。"""
+
+    def __init__(self, a: float = 1.0, b: float = 0.0) -> None:
+        super().__init__()
+        self.a, self.b = a, b
+
+    def forward(self, x):
+        return torch.tanh((x * self.a + self.b) / 3) * 3
+
+
+class _TFoldedUp(nn.Module):
+    """Upsample(nearest,2) + Conv2d(k3,p1) -> ConvTranspose2d(k4,s2,p1)，数学等价。"""
+
+    def __init__(self, conv: nn.Conv2d, channels_last: bool) -> None:
+        super().__init__()
+        w, b = fold_upsample_conv(conv, channels_last)
+        self.register_buffer("w", w)
+        self.register_buffer("b", b if b is not None else torch.zeros(
+            conv.out_channels, dtype=conv.weight.dtype, device=conv.weight.device))
+
+    def forward(self, x):
+        return F.conv_transpose2d(x, self.w, self.b, stride=2, padding=1)
+
+
+def _taesd_decoder_layers() -> nn.Sequential:
+    B = _TBlock
+    return nn.Sequential(
+        _TClamp(), nn.Conv2d(4, 64, 3, padding=1), nn.ReLU(),
+        B(), B(), B(), nn.Upsample(scale_factor=2), nn.Conv2d(64, 64, 3, padding=1, bias=False),
+        B(), B(), B(), nn.Upsample(scale_factor=2), nn.Conv2d(64, 64, 3, padding=1, bias=False),
+        B(), B(), B(), nn.Upsample(scale_factor=2), nn.Conv2d(64, 64, 3, padding=1, bias=False),
+        B(), nn.Conv2d(64, 3, 3, padding=1))
+
+
+def _taesd_encoder_layers() -> nn.Sequential:
+    B = _TBlock
+    return nn.Sequential(
+        nn.Conv2d(3, 64, 3, padding=1), B(),
+        nn.Conv2d(64, 64, 3, padding=1, stride=2, bias=False), B(), B(), B(),
+        nn.Conv2d(64, 64, 3, padding=1, stride=2, bias=False), B(), B(), B(),
+        nn.Conv2d(64, 64, 3, padding=1, stride=2, bias=False), B(), B(), B(),
+        nn.Conv2d(64, 4, 3, padding=1))
+
+
+class TAESDLite(nn.Module):
+    """与 AutoencoderKLLite 同接口，可直接顶替。
+
+    对外一律用「未缩放的 SD latent」，与 SD VAE 的约定一致，UNet 侧无需改动。
+    三处仿射全部折进权重/常量，运行时零成本：
+      - encoder 末层  W/=A, b=(b-B)/A          （输出变换，不碰填充，严格等价）
+      - decoder 首层  Clamp 内联 z*A+B          （tanh 挡着折不进卷积，折进常量）
+      - decoder 末层  W*=2, b=2b-1              （原 .mul(2).sub(1)）
+    encoder 入口的 .add(1).div(2) 是**输入**变换，折进权重会让零填充那一圈从 0.5
+    变成 0，边界不等价，故保留为一次 elementwise（实测 0.024 ms，已被 CUDA Graph 吸收）。
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.encoder = _taesd_encoder_layers()
+        self.decoder = _taesd_decoder_layers()
+
+    def bake(self, channels_last: bool) -> "TAESDLite":
+        with torch.no_grad():
+            ce = self.encoder[-1]
+            ce.weight.div_(_TAESD_A)
+            ce.bias.sub_(_TAESD_B).div_(_TAESD_A)
+            cd = self.decoder[-1]
+            cd.weight.mul_(2.0)
+            cd.bias.mul_(2.0).sub_(1.0)
+            self.decoder[0].a, self.decoder[0].b = _TAESD_A, _TAESD_B
+        for seq in (self.encoder, self.decoder):
+            mods, out, i = list(seq), [], 0
+            while i < len(mods):
+                if (isinstance(mods[i], nn.Upsample) and i + 1 < len(mods)
+                        and isinstance(mods[i + 1], nn.Conv2d)):
+                    out.append(_TFoldedUp(mods[i + 1], channels_last)); i += 2
+                else:
+                    if isinstance(mods[i], _TBlock):
+                        mods[i].fuse_()
+                    out.append(mods[i]); i += 1
+            new = nn.Sequential(*out)
+            if seq is self.encoder:
+                self.encoder = new
+            else:
+                self.decoder = new
+        return self
+
+    def encode_latent(self, x: torch.Tensor) -> torch.Tensor:
+        return self.encoder(x.add(1).div(2))
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return self.decoder(z)
 
 # ---------------------------------------------------------------------------
 # Section 7: DDPM 单步系数
@@ -882,7 +1033,11 @@ class Runner:
                         weights_only=True)
         self.text_encoder = build_model(CLIPTextModelLite, sd["text_encoder"],
                                         self.weight_dtype, self.device)
-        self.vae = build_model(AutoencoderKLLite, sd["vae"], self.weight_dtype, self.device)
+        self.use_taesd = str(cfg["vae"]).lower() == "taesd" and "taesd" in sd
+        if self.use_taesd:
+            self.vae = build_model(TAESDLite, sd["taesd"], self.weight_dtype, self.device)
+        else:
+            self.vae = build_model(AutoencoderKLLite, sd["vae"], self.weight_dtype, self.device)
         self.unet = build_model(UNet2DConditionModelLite, sd["unet"], self.weight_dtype, self.device)
         del sd
 
@@ -924,10 +1079,26 @@ class Runner:
                                            dtype=self.weight_dtype)
             self._setup_backend(cfg["channels_last"])
 
+    def _bake_taesd(self, channels_last: bool) -> None:
+        """折叠 + cudnn 融合。只能做一次（会原地改权重），换布局时不重做。"""
+        if getattr(self, "_taesd_baked", False):
+            return
+        self.vae.bake(channels_last)
+        self._taesd_baked = True
+
     def _set_memory_format(self, channels_last: bool) -> None:
         self.channels_last = channels_last
         self._mf = torch.channels_last if channels_last else None
         mf = torch.channels_last if channels_last else torch.contiguous_format
+        if getattr(self, "use_taesd", False):
+            self._bake_taesd(channels_last)
+            with torch.no_grad():
+                self.unet.to(memory_format=mf)
+                self.vae.to(memory_format=mf)
+                for m in self.unet.modules():
+                    if isinstance(m, Upsample2D):
+                        m._convt = fold_upsample_conv(m.conv, channels_last)
+            return
         with torch.no_grad():
             for model in (self.unet, self.vae):
                 model.to(memory_format=mf)
@@ -936,6 +1107,37 @@ class Runner:
                 for m in model.modules():
                     if isinstance(m, Upsample2D):
                         m._convt = fold_upsample_conv(m.conv, channels_last)
+
+    def _capture_graph(self) -> bool:
+        """把整条 _infer_tile 捕成一张 CUDA Graph。
+
+        形状恒定（1x3x512x512）、无 RNG（噪声常驻）、无数据依赖分支，满足捕获条件。
+        V100 实测 766 次 kernel 启动、平均每个只有 32 us，启动开销占了约 6 ms：
+        35.9 -> 29.9 ms，且与 eager **逐位相同**（图只改调度不改数值）。
+        捕获失败不致命，回落到 eager。
+        """
+        try:
+            mf = self._mf or torch.contiguous_format
+            self._g_in = torch.zeros(1, 3, self.patch_size, self.patch_size,
+                                     dtype=self.weight_dtype, device=self.device
+                                     ).contiguous(memory_format=mf)
+            s = torch.cuda.Stream()
+            s.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(s), sdpa_kernel(
+                    [SDPBackend.FLASH_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]):
+                for _ in range(3):
+                    self._infer_tile_eager(self._g_in)
+            torch.cuda.current_stream().wait_stream(s)
+            g = torch.cuda.CUDAGraph()
+            with torch.cuda.graph(g), sdpa_kernel(
+                    [SDPBackend.FLASH_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]):
+                self._g_out = self._infer_tile_eager(self._g_in)
+            self._graph = g
+            return True
+        except Exception as e:
+            logger.warning("CUDA Graph 捕获失败，回落 eager: %s", e)
+            self._graph = None
+            return False
 
     def _warmup(self, iters: int = 3) -> float:
         """按当前布局跑热路径，返回后半程的平均墙钟秒数（形状恒定，顺带完成 cudnn 试跑）。"""
@@ -995,6 +1197,8 @@ class Runner:
         if len(cands) == 1:
             use(cands[0])
             self._warmup()
+            if self.config.get("cuda_graph", True) and self.device.type == "cuda":
+                self._capture_graph()
             return
         # 计时次数要够：后端之间的差距可能只有 1%（V100 上 triton 84.1 vs cuda 84.8），
         # 3 次的噪声就能把选择变成抛硬币；triton 首轮还带 JIT 编译
@@ -1004,6 +1208,8 @@ class Runner:
             self.backend_timing[name] = self._warmup(iters=10)
         use(min(self.backend_timing, key=self.backend_timing.get))
         self._warmup()
+        if self.config.get("cuda_graph", True) and self.device.type == "cuda":
+            self._capture_graph()
 
     def _encode_prompt(self, prompt: str) -> torch.Tensor:
         """Encode text to CLIP prompt embeddings [1, 77, 1024]."""
@@ -1028,12 +1234,21 @@ class Runner:
 
     @torch.no_grad()
     def _infer_tile(self, x: torch.Tensor) -> torch.Tensor:
+        g = getattr(self, "_graph", None)
+        if g is not None:
+            self._g_in.copy_(x)
+            g.replay()
+            return self._g_out
+        return self._infer_tile_eager(x)
+
+    def _infer_tile_eager(self, x: torch.Tensor) -> torch.Tensor:
         """单 tile 模型链：VAE encode -> 重参数化 -> UNet/DDPM -> VAE decode。
 
         x: [1, 3, patch, patch] weight_dtype（channels_last）-> [1, 3, patch, patch] fp32。
         全程无 RNG、无形状分支，输入形状恒定。
         """
-        z = ops.sample_latent(self.vae.encode_moments(x), self._tile_noise)
+        z = (self.vae.encode_latent(x) if self.use_taesd
+             else ops.sample_latent(self.vae.encode_moments(x), self._tile_noise))
         z = self._forward_generator(z.to(self.weight_dtype), self._text_embed)
         return self.vae.decode(z.to(self.weight_dtype)).float()
 
@@ -1100,7 +1315,7 @@ class Runner:
         # flash 不支持的 VAE attention（head_dim=512）自动回落 EFFICIENT
         with sdpa_kernel([SDPBackend.FLASH_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]):
             z_lq = make_tiled_fn(
-                fn=lambda tile: self.vae.sample_latent(self.vae.encode_moments(tile)),
+                fn=lambda tile: self.vae.encode_latent(tile),
                 size=self.patch_size, stride=self.stride, scale_type="down", scale=8, channel=4,
                 tile_format=mf, out_format=mf,
             )(x)
@@ -1200,8 +1415,20 @@ def export_weights(src: Union[str, Path], dst: Union[str, Path], dtype: torch.dt
     merge_lora_into_unet_sd(unet_sd, lora_path)
     print(f"LoRA 已合并进 UNet ({len(unet_sd)} tensor)，来源: {lora_path}")
 
-    packed = {name: {k: v.to(dtype) for k, v in sd.items()}
-              for name, sd in [("text_encoder", text_sd), ("vae", vae_sd), ("unet", unet_sd)]}
+    parts = [("text_encoder", text_sd), ("vae", vae_sd), ("unet", unet_sd)]
+    # TAESD 两个 safetensors 的 key 就是 nn.Sequential 索引，加前缀即可对上 TAESDLite
+    tae_e = next(iter(glob.glob(str(src / "**" / "taesd_encoder.safetensors"), recursive=True)), None)
+    tae_d = next(iter(glob.glob(str(src / "**" / "taesd_decoder.safetensors"), recursive=True)), None)
+    if tae_e and tae_d:
+        t = {}
+        for pre, f in (("encoder.", tae_e), ("decoder.", tae_d)):
+            for k, v in load_safetensors(f).items():
+                t[pre + k] = v
+        parts.append(("taesd", t))
+        print(f"TAESD 已打包（{len(t)} 张量）: {tae_e}")
+    else:
+        print("未找到 taesd_*.safetensors，包里不含 TAESD（config 的 vae 会自动回落 sd）")
+    packed = {name: {k: v.to(dtype) for k, v in sd.items()} for name, sd in parts}
     torch.save(packed, dst / WEIGHTS_FILE)
 
     for fname in ("vocab.json", "merges.txt"):
