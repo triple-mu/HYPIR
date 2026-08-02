@@ -227,8 +227,10 @@ class BaseTrainer:
     def prepare_all(self):
         # [csig-speedup] 形状恒定，让 cuDNN 选最优卷积算法
         torch.backends.cudnn.benchmark = True
-        # [csig-speedup] 这条链路卷积密集（VAE + UNet + ConvNext D + VGG）
-        if os.environ.get("CSIG_CHANNELS_LAST", "1") == "1":
+        # [csig-speedup] channels_last 默认关闭：实测在这条链路上是负收益
+        # （VAE encode 慢 25%、UNet 前反慢 19%；唯一受益的 LPIPS 1.18x 收益太小）。
+        # 保留开关只为复现对照，不要默认打开。
+        if os.environ.get("CSIG_CHANNELS_LAST", "0") == "1":
             for _m in (self.G, self.D, self.vae, self.net_lpips):
                 _m.to(memory_format=torch.channels_last)
         logger.info("Wrapping models, optimizers and dataloaders")
