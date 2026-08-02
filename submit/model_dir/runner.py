@@ -1167,7 +1167,12 @@ def merge_lora_into_unet_sd(unet_sd: dict[str, torch.Tensor], lora_path: Union[s
         unet_sd[key] = W + scale * delta
 
 
-def export_weights(src: Union[str, Path], dst: Union[str, Path], dtype: torch.dtype = torch.float16) -> None:
+def export_weights(src: Union[str, Path], dst: Union[str, Path], dtype: torch.dtype = torch.float16,
+                   lora: Optional[Union[str, Path]] = None) -> None:
+    """lora 默认用 src/HYPIR_sd2.pth（官方未微调权重，保留增益 19.0%）。
+    要打包微调结果就显式传 checkpoint-N/ema_state_dict.pth —— 它和官方权重结构一致
+    （514 tensor / 257 模块 / 同样的 key 命名），合并逻辑不用改。
+    """
     src, dst = Path(src), Path(dst)
     (dst / "tokenizer").mkdir(parents=True, exist_ok=True)
 
@@ -1185,8 +1190,9 @@ def export_weights(src: Union[str, Path], dst: Union[str, Path], dtype: torch.dt
         vae_sd[k] = v
 
     unet_sd = load_safetensors(src / "unet" / "diffusion_pytorch_model.safetensors")
-    merge_lora_into_unet_sd(unet_sd, src / "HYPIR_sd2.pth")
-    print(f"LoRA 已合并进 UNet ({len(unet_sd)} tensor)")
+    lora_path = Path(lora) if lora else src / "HYPIR_sd2.pth"
+    merge_lora_into_unet_sd(unet_sd, lora_path)
+    print(f"LoRA 已合并进 UNet ({len(unet_sd)} tensor)，来源: {lora_path}")
 
     packed = {name: {k: v.to(dtype) for k, v in sd.items()}
               for name, sd in [("text_encoder", text_sd), ("vae", vae_sd), ("unet", unet_sd)]}
@@ -1208,8 +1214,11 @@ def main() -> None:
     parser.add_argument("--src", type=str, default=str(here.parent / "HYPIR" / "weights"),
                         help="原始 HYPIR weights 目录")
     parser.add_argument("--dst", type=str, default=str(here), help="输出的 model_dir")
+    parser.add_argument("--lora", type=str, default=None,
+                        help="LoRA 权重路径，默认 <src>/HYPIR_sd2.pth（官方未微调）。"
+                             "打包微调结果传 checkpoint-N/ema_state_dict.pth")
     args = parser.parse_args()
-    export_weights(args.src, args.dst)
+    export_weights(args.src, args.dst, lora=args.lora)
 
 
 if __name__ == "__main__":

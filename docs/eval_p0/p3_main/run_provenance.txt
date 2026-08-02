@@ -1,0 +1,3 @@
+commit: 3a0a072 (csig: 判别器损失每次调用 4 次阻塞 H2D)
+gpus: 1,2,3,4  (num_processes=4)
+note: 本轮启动时 run_train.sh 还没有自动落配置的功能，这两个文件是事后补的

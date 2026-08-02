@@ -1,0 +1,78 @@
+# CSIG-2026 赛道二：在实测退化配方上后训练 HYPIR LoRA。
+#
+# 与原版 sd2_train.yaml 的差异（依据见 csig/README.md）：
+#   1. 数据管线换成 csig：nvJPEG GPU 解码 + 实测退化（无噪声、恒 q95、重尾各向异性核）
+#      原版一半样本带 sigma<=30 强噪，而真实 LQ 实测 sigma 0.014-0.090 灰阶
+#   2. use_sharpener 概念取消 —— 原版把训练目标 USM 锐化，实测把天花板从 p_rel 8.340 压到 7.965
+#   3. 从已发布的 HYPIR_sd2.pth + _D.safetensors 续训，判别器不用从零预热
+#   4. mixed_precision 用 fp16，与推理端一致（推理实测 fp16 优于 bf16：57.93 vs 43.55 dB）
+base_model_type: sd2
+output_dir: /root/.cache/huggingface/csig/out/p3_main
+base_model_path: /root/.cache/huggingface/csig/weights
+init_generator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2.pth
+init_discriminator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2_D.safetensors
+
+model_t: 200
+coeff_t: 200
+lora_rank: 256
+lora_modules: [to_k, to_q, to_v, to_out.0, conv, conv1, conv2, conv_shortcut, conv_out, proj_in, proj_out, ff.net.2, ff.net.0.proj]
+
+data_config:
+  train:
+    # 实测：worker 只读字节 0.01 ms/张，解码在 GPU 上批量做（batch24 时 3.5 ms/张），
+    # 所以 num_workers 不需要大。原版 2 workers + CPU 全解码只有 14 样本/秒，是硬瓶颈。
+    # batch 8 是关梯度检查点后 H200(144G) 上的实测上限：峰值 ~95 GB/卡，24 直接 OOM。
+    # 4 卡 x 8 = 有效 batch 32，与 P2 曲线可比，换卡数时要同步调这里。
+    batch_size: 8
+    dataloader_num_workers: 8
+    collate_fn: HYPIR.dataset.csig.csig_collate
+    dataset:
+      target: HYPIR.dataset.csig.CSIGDataset
+      params:
+        file_list: /root/.cache/huggingface/csig/data/lists/train_mix.txt
+        out_size: 512
+        # 与推理端 model_dir/config.json 的 prompt 一致，否则 train/infer 条件不匹配
+        prompt: "A high-resolution photograph with fine natural detail: modern Chinese city high-rise buildings with glass curtain walls and tiled facades, construction cranes and shop signage, distant hills, and close-up green foliage with flowers."
+    batch_transform:
+      target: HYPIR.dataset.csig.CSIGBatchTransform
+      params:
+        hq_key: jpeg
+        extra_keys: [txt]
+        out_size: 512
+
+use_ema: true
+ema_decay: 0.999
+resume_ema: true
+
+lambda_gan: 0.5
+lambda_lpips: 5
+lambda_l2: 1
+lr_G: 1e-5
+lr_D: 1e-5
+optimizer_type: adam
+opt_kwargs:
+  betas: [0.9, 0.999]
+  fused: true
+
+mixed_precision: fp16
+seed: 231
+# P2 实测曲线：19.0%(基线) -> 44.3%(5000步) -> 45.6%(7000步)，大头在 5000 步前
+max_train_steps: 8000
+gradient_accumulation_steps: 1
+# 显存实测：batch8+检查点 68.5G / batch8无检查点 80.7G / batch24无检查点 132G 就 OOM
+# [csig-speedup] 关掉：显存 52->64 GB 换 +6~10%，且是 compile 生效的前提
+gradient_checkpointing: false
+max_grad_norm: 1.0
+logging_dir: logs
+report_to: tensorboard
+checkpointing_steps: 500
+checkpoints_total_limit: 20      # 500 步一存 x 8000 步 = 16 份，别让它删掉评估曲线要用的早期档
+resume_from_checkpoint: ~
+log_image_steps: 200
+log_grad_steps: 200
+log_grad_modules: [conv_out]
+
+# [csig-compile] torch.compile：实测模型侧 1005.7 -> 630.1 ms (1.60x)，且显存反而更低
+# （inductor 的中间量复用抵消了关梯度检查点的开销）。首次编译约 200 s，热缓存重启 66 s。
+# 编译点：G（prepare 之后）/ vae.encoder+decoder / net_lpips / D.model.encode_image
+compile: true
