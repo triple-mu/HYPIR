@@ -128,9 +128,9 @@ class BaseTrainer:
             warnings.simplefilter("ignore")
             self.net_lpips = lpips.LPIPS(net="vgg", verbose=False).to(self.device)
         self.net_lpips.eval().requires_grad_(False)
-        # [csig-speedup] LPIPS 是纯前向冻结模块，半精度即可，省显存省带宽
-        if self.weight_dtype in (torch.float16, torch.bfloat16):
-            self.net_lpips.to(self.weight_dtype)
+        # 注：不要把 LPIPS 模块本身转半精度。mixed_precision 下 accelerate 已用 autocast
+        # 包住训练步，它的卷积自然走半精度；而 forward_generator 返回的是 fp32，
+        # 手工转模块反而会撞 "Input type (float) and bias type (Half)"。
 
     @overload
     def init_generator(self):
