@@ -32,12 +32,21 @@ class EMAModel:
             return
         # [csig-speedup] 逐参数的 lerp 在 259M/514 张量上要 21 ms/步；
         # torch._foreach_lerp_ 批量化后 0.85 ms，数学等价（ema += (1-d)*(p-ema)）
-        if not hasattr(self, "_ema_keys"):
-            self._ema_keys = [n for n, p in self.model.named_parameters() if p.requires_grad]
+        #
+        # 两个列表必须只建一次。dict(named_parameters()) 是一次完整模块树遍历
+        # （SD2.1 UNet ~686 模块 / ~1000 参数），写进列表推导式里就是每个 key 遍历一遍：
+        # 514 x ~1700 次 Python 操作 ≈ 每步 0.9 s，实测占了 2.65 s/步里的一大块，
+        # py-spy 上表现为 70% 采样落在 named_modules / _named_members。
+        # model 是 unwrap 后的裸 nn.Module，nn.Parameter 对象在训练中不会被替换，缓存安全。
+        if not hasattr(self, "_ema_ps"):
+            named = dict(self.model.named_parameters())
+            keys = [n for n in self.ema_state_dict if n in named]
+            self._ema_ps = [named[n] for n in keys]
+            self._ema_es = [self.ema_state_dict[n] for n in keys]
         with torch.no_grad():
-            ps = [dict(self.model.named_parameters())[n].detach() for n in self._ema_keys]
-            es = [self.ema_state_dict[n] for n in self._ema_keys]
-            torch._foreach_lerp_(es, ps, 1 - self.decay)
+            # detach 每步重做：只是 514 次共享 storage 的浅包装，可忽略，
+            # 但能挡住优化器万一重新赋值 .data 导致缓存视图失效
+            torch._foreach_lerp_(self._ema_es, [p.detach() for p in self._ema_ps], 1 - self.decay)
 
     def activate_ema_weights(self):
         if not self.use_ema:
