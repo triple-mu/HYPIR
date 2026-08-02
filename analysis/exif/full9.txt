@@ -1,0 +1,764 @@
+====================================================================================================
+### case1.jpg  size=7172049
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=700     ICC_PROFILE
+  @2144      APP8   len=26      ITUT35&
+  @2172      APP0   len=16      JFIF
+  @2190      DQT    len=67      
+  @2259      DQT    len=67      		
+  @2328      SOF0   len=17      
+  @2347      DHT    len=31      
+  @2380      DHT    len=181     
+  @2563      DHT    len=31      
+  @2596      DHT    len=181     
+  @2779      DRI    len=4       
+  @2785      SOS    len=12      
+  @1023145   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 1970:01:25 17:18:44
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 89033000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 800
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 1970:01:25 17:18:44
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 1970:01:25 17:18:44
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 16000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434323200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 461000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 461000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 461000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 1000/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 240
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case2.jpg  size=7587014
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=700     ICC_PROFILE
+  @2144      APP8   len=26      ITUT35&
+  @2172      APP0   len=16      JFIF
+  @2190      DQT    len=67      
+  @2259      DQT    len=67      		
+  @2328      SOF0   len=17      
+  @2347      DHT    len=31      
+  @2380      DHT    len=181     
+  @2563      DHT    len=31      
+  @2596      DHT    len=181     
+  @2779      DRI    len=4       
+  @2785      SOS    len=12      
+  @1392999   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 1970:01:25 17:28:38
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 100000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 1250
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 1970:01:25 17:28:38
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 1970:01:25 17:28:38
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 10000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 758000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 758000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 758000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case3.jpg  size=7151931
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=700     ICC_PROFILE
+  @2144      APP8   len=26      ITUT35&
+  @2172      APP0   len=16      JFIF
+  @2190      DQT    len=67      
+  @2259      DQT    len=67      		
+  @2328      SOF0   len=17      
+  @2347      DHT    len=31      
+  @2380      DHT    len=181     
+  @2563      DHT    len=31      
+  @2596      DHT    len=181     
+  @2779      DRI    len=4       
+  @2785      SOS    len=12      
+  @1036409   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 1970:01:27 16:22:55
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 150000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 1250
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 1970:01:27 16:22:55
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 1970:01:27 16:22:55
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 0c000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 317000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 317000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 317000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case4.jpg  size=7924148
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=700     ICC_PROFILE
+  @2144      APP8   len=26      ITUT35&
+  @2172      APP0   len=16      JFIF
+  @2190      DQT    len=67      
+  @2259      DQT    len=67      		
+  @2328      SOF0   len=17      
+  @2347      DHT    len=31      
+  @2380      DHT    len=181     
+  @2563      DHT    len=31      
+  @2596      DHT    len=181     
+  @2779      DRI    len=4       
+  @2785      SOS    len=12      
+  @1742398   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 1970:01:27 16:36:00
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 100000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 1250
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 1970:01:27 16:36:00
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 1970:01:27 16:36:00
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 10000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 125000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 125000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 125000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case5.jpg  size=7492032
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1300    Exif
+  @1304      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1340      APP2   len=88      MPF
+  @1430      APP2   len=700     ICC_PROFILE
+  @2132      APP8   len=26      ITUT35&
+  @2160      APP0   len=16      JFIF
+  @2178      DQT    len=67      
+  @2247      DQT    len=67      		
+  @2316      SOF0   len=17      
+  @2335      DHT    len=31      
+  @2368      DHT    len=181     
+  @2551      DHT    len=31      
+  @2584      DHT    len=181     
+  @2767      DRI    len=4       
+  @2773      SOS    len=12      
+  @1335948   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1292 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 1970:01:27 16:37:12
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 150000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 800
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 1970:01:27 16:37:12
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 1970:01:27 16:37:12
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 0c000000
+       0x927C MakerNote                    UNDEFINED cnt=314    nb=314    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000007400000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1220     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1230     = 971000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1238     = 971000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1246     = 971000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1262
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1254     = 2000/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 480
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1262 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1272     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1284     = 30313030
+====================================================================================================
+### case38.jpg  size=9135707
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1342    Exif
+  @1346      APP7   len=61888   HUAWEI
+  @63236     APP8   len=62972   HUAWEI
+  @126210    APP9   len=65492   HUAWEI
+  @191704    APP10  len=53404   HUAWEI
+  @245110    APP7   len=57288   HUAWEI
+  @302400    APP7   len=62244   HUAWEI
+  @364646    APP7   len=50708   HUAWEI
+  @415356    APP7   len=36900   HUAWEI
+  @452258    APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @452294    APP2   len=88      MPF
+  @452384    APP2   len=700     ICC_PROFILE
+  @453086    APP8   len=26      ITUT35&
+  @453114    APP0   len=16      JFIF
+  @453132    DQT    len=67      
+  @453201    DQT    len=67      		
+  @453270    SOF0   len=17      
+  @453289    DHT    len=31      
+  @453322    DHT    len=181     
+  @453505    DHT    len=31      
+  @453538    DHT    len=181     
+  @453721    DRI    len=4       
+  @453727    SOS    len=12      
+  @3086399   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1334 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=7      nb=7      off=194      = HUAWEI
+     0x0110 Model                        ASCII     cnt=21     nb=21     off=202      = HUAWEI Pura 80 Ultra
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=224      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=232      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=1      nb=1      off=138      = 
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=240      = 2026:04:07 19:36:36
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 260
+    <ExifIFD> off=260 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=794      = 20734000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=802      = 240/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=294      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=306      = 400
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=318      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=810      = 2026:04:07 19:36:36
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=830      = 2026:04:07 19:36:36
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=354      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=850      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=858      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=866      = 252/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=874      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=882      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=890      = 252/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=438      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=450      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=462      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=898      = 24130/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=906      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=498      = 44000000
+       0x927C MakerNote                    UNDEFINED cnt=350    nb=350    off=912      = 485541574549000049492a0008000000060000000400010000005600000000010400010000007400000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1262     = 23232a2a4e3434323300
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1272     = 746000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1280     = 746000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1288     = 746000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=570      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=582      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=594      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=606      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=618      = 1304
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=630      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=642      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=654      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=666      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=678      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=690      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1296     = 100/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=714      = 97
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=726      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=738      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=750      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=762      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=774      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=786      = 0
+    <InteropIFD> off=1304 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1314     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1326     = 30313030
+====================================================================================================
+### case64.jpg  size=8067514
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=676     ICC_PROFILE
+  @2120      APP8   len=26      ITUT35&
+  @2148      APP0   len=16      JFIF
+  @2166      DQT    len=67      
+  @2235      DQT    len=67      		
+  @2304      SOF0   len=17      
+  @2323      DHT    len=31      
+  @2356      DHT    len=181     
+  @2539      DHT    len=31      
+  @2572      DHT    len=181     
+  @2755      DRI    len=4       
+  @2761      SOS    len=12      
+  @1844489   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 2026:04:15 10:01:15
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 150000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 800
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 2026:04:15 10:01:15
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 2026:04:15 10:01:15
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 0e000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 188000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 188000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 188000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case65.jpg  size=8425544
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=676     ICC_PROFILE
+  @2120      APP8   len=26      ITUT35&
+  @2148      APP0   len=16      JFIF
+  @2166      DQT    len=67      
+  @2235      DQT    len=67      		
+  @2304      SOF0   len=17      
+  @2323      DHT    len=31      
+  @2356      DHT    len=181     
+  @2539      DHT    len=31      
+  @2572      DHT    len=181     
+  @2755      DRI    len=4       
+  @2761      SOS    len=12      
+  @2271580   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 2026:04:15 10:34:47
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 150000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 800
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 2026:04:15 10:34:47
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 2026:04:15 10:34:47
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 06000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 065000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 065000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 065000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030
+====================================================================================================
+### case66.jpg  size=7907034
+--- 段布局 (offset) ---
+  @0         SOI    len=0       
+  @2         APP1   len=1312    Exif
+  @1316      APP2   len=34      urn:iso:std:iso:ts:21496:-1
+  @1352      APP2   len=88      MPF
+  @1442      APP2   len=676     ICC_PROFILE
+  @2120      APP8   len=26      ITUT35&
+  @2148      APP0   len=16      JFIF
+  @2166      DQT    len=67      
+  @2235      DQT    len=67      		
+  @2304      SOF0   len=17      
+  @2323      DHT    len=31      
+  @2356      DHT    len=181     
+  @2539      DHT    len=31      
+  @2572      DHT    len=181     
+  @2755      DRI    len=4       
+  @2761      SOS    len=12      
+  @1723356   EOI    len=0       
+--- TIFF header: byteorder=MM magic=42 ifd0_off=8 tiff_len=1304 ---
+  [IFD0] off=8 nentries=14 next=0
+     0x0100 ImageWidth                   SHORT     cnt=1      nb=2      off=18       = 4096
+     0x0101 ImageLength                  SHORT     cnt=1      nb=2      off=30       = 3072
+     0x0102 BitsPerSample                SHORT     cnt=3      nb=6      off=182      = [8, 8, 8]
+     0x010E ImageDescription             ASCII     cnt=6      nb=6      off=188      = _cuva
+     0x010F Make                         ASCII     cnt=8      nb=8      off=194      = unknown
+     0x0110 Model                        ASCII     cnt=8      nb=8      off=202      = unknown
+     0x0112 Orientation                  SHORT     cnt=1      nb=2      off=90       = 1
+     0x011A XResolution                  RATIONAL  cnt=1      nb=8      off=210      = 72/1
+     0x011B YResolution                  RATIONAL  cnt=1      nb=8      off=218      = 72/1
+     0x0128 ResolutionUnit               SHORT     cnt=1      nb=2      off=126      = 2
+     0x0131 Software                     ASCII     cnt=8      nb=8      off=226      = unknown
+     0x0132 DateTime                     ASCII     cnt=20     nb=20     off=234      = 2026:04:15 10:35:37
+     0x0213 YCbCrPositioning             SHORT     cnt=1      nb=2      off=162      = 1
+     0x8769 ExifIFDPointer               LONG      cnt=1      nb=4      off=174      = 254
+    <ExifIFD> off=254 nentries=44
+       0x829A ExposureTime                 RATIONAL  cnt=1      nb=8      off=788      = 150000000/1000000000
+       0x829D FNumber                      RATIONAL  cnt=1      nb=8      off=796      = 300/100
+       0x8822 ExposureProgram              SHORT     cnt=1      nb=2      off=288      = 2
+       0x8827 ISOSpeedRatings              SHORT     cnt=1      nb=2      off=300      = 800
+       0x9000 ExifVersion                  UNDEFINED cnt=4      nb=4      off=312      = 30323130
+       0x9003 DateTimeOriginal             ASCII     cnt=20     nb=20     off=804      = 2026:04:15 10:35:37
+       0x9004 DateTimeDigitized            ASCII     cnt=20     nb=20     off=824      = 2026:04:15 10:35:37
+       0x9101 ComponentsConfiguration      UNDEFINED cnt=4      nb=4      off=348      = 01020300
+       0x9102 CompressedBitsPerPixel       RATIONAL  cnt=1      nb=8      off=844      = 95/100
+       0x9201 ShutterSpeedValue            SRATIONAL cnt=1      nb=8      off=852      = 298973/10000
+       0x9202 ApertureValue                RATIONAL  cnt=1      nb=8      off=860      = 316/100
+       0x9203 BrightnessValue              SRATIONAL cnt=1      nb=8      off=868      = 0/1
+       0x9204 ExposureBiasValue            SRATIONAL cnt=1      nb=8      off=876      = 0/10
+       0x9205 MaxApertureValue             RATIONAL  cnt=1      nb=8      off=884      = 275/100
+       0x9207 MeteringMode                 SHORT     cnt=1      nb=2      off=432      = 5
+       0x9208 LightSource                  SHORT     cnt=1      nb=2      off=444      = 1
+       0x9209 Flash                        SHORT     cnt=1      nb=2      off=456      = 0
+       0x920A FocalLength                  RATIONAL  cnt=1      nb=8      off=892      = 25800/1000
+       0x927C MakerNote                    UNDEFINED cnt=5      nb=5      off=900      = 41465f4300
+       0x927C MakerNote                    UNDEFINED cnt=4      nb=4      off=492      = 0e000000
+       0x927C MakerNote                    UNDEFINED cnt=326    nb=326    off=906      = 485541574549000049492a0008000000070000000400010000006200000000010400010000008000000000020400010000000000000002020400010000000000...
+       0x927C MakerNote                    UNDEFINED cnt=10     nb=10     off=1232     = 23232a2a4e3434313200
+       0x9290 SubSecTime                   ASCII     cnt=7      nb=7      off=1242     = 613000
+       0x9291 SubSecTimeOriginal           ASCII     cnt=7      nb=7      off=1250     = 613000
+       0x9292 SubSecTimeDigitized          ASCII     cnt=7      nb=7      off=1258     = 613000
+       0xA000 FlashpixVersion              UNDEFINED cnt=4      nb=4      off=564      = 30313030
+       0xA001 ColorSpace                   SHORT     cnt=1      nb=2      off=576      = 65535
+       0xA002 ExifImageWidth               LONG      cnt=1      nb=4      off=588      = 4096
+       0xA003 ExifImageHeight              LONG      cnt=1      nb=4      off=600      = 3072
+       0xA005 InteroperabilityIFDPointer   LONG      cnt=1      nb=4      off=612      = 1274
+       0xA217 SensingMethod                SHORT     cnt=1      nb=2      off=624      = 2
+       0xA300 FileSource                   UNDEFINED cnt=1      nb=1      off=636      = 03
+       0xA301 SceneType                    UNDEFINED cnt=1      nb=1      off=648      = 01
+       0xA401 CustomRendered               SHORT     cnt=1      nb=2      off=660      = 1
+       0xA402 ExposureMode                 SHORT     cnt=1      nb=2      off=672      = 0
+       0xA403 WhiteBalance                 SHORT     cnt=1      nb=2      off=684      = 0
+       0xA404 DigitalZoomRatio             RATIONAL  cnt=1      nb=8      off=1266     = 400/100
+       0xA405 FocalLengthIn35mmFilm        SHORT     cnt=1      nb=2      off=708      = 96
+       0xA406 SceneCaptureType             SHORT     cnt=1      nb=2      off=720      = 0
+       0xA407 GainControl                  SHORT     cnt=1      nb=2      off=732      = 0
+       0xA408 Contrast                     SHORT     cnt=1      nb=2      off=744      = 0
+       0xA409 Saturation                   SHORT     cnt=1      nb=2      off=756      = 0
+       0xA40A Sharpness                    SHORT     cnt=1      nb=2      off=768      = 0
+       0xA40C SubjectDistanceRange         SHORT     cnt=1      nb=2      off=780      = 0
+    <InteropIFD> off=1274 nentries=2
+       0x0001 Unknown_0x0001               ASCII     cnt=4      nb=4      off=1284     = R98
+       0x0002 Unknown_0x0002               UNDEFINED cnt=4      nb=4      off=1296     = 30313030

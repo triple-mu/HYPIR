@@ -1,0 +1,560 @@
+{
+ "case1.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case1.jpg",
+  "size": 7172049,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1023147,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 126036,
+    "off": 1021787
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case1_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1023147,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case1_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 126036,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case2.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case2.jpg",
+  "size": 7587014,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1393001,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 135927,
+    "off": 1391641
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case2_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1393001,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case2_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 135927,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case3.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case3.jpg",
+  "size": 7151931,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1036411,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 103658,
+    "off": 1035051
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case3_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1036411,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case3_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 103658,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case4.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case4.jpg",
+  "size": 7924148,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1742400,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 169886,
+    "off": 1741040
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case4_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1742400,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case4_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 169886,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case5.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case5.jpg",
+  "size": 7492032,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1335950,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 125000,
+    "off": 1334602
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case5_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1335950,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case5_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 125000,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case38.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case38.jpg",
+  "size": 9135707,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 3086401,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 222096,
+    "off": 2634099
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case38_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 3086401,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case38_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 222096,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case64.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case64.jpg",
+  "size": 8067514,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1844491,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 219107,
+    "off": 1843131
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case64_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     3072,
+     4096
+    ],
+    "bytes": 1844491,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case64_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     1536,
+     2048
+    ],
+    "bytes": 219107,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case65.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case65.jpg",
+  "size": 8425544,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 2271582,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 150046,
+    "off": 2270222
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case65_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 2271582,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case65_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 150046,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ },
+ "case66.jpg": {
+  "file": "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u6d4b\u8bd5\u96c6/case66.jpg",
+  "size": 7907034,
+  "mpf_tags": {
+   "0xb000": [
+    7,
+    4
+   ],
+   "0xb001": [
+    4,
+    1
+   ],
+   "0xb002": [
+    7,
+    32
+   ]
+  },
+  "imgs": [
+   {
+    "attr": "0x30000",
+    "size": 1723358,
+    "off": 0
+   },
+   {
+    "attr": "0x50000",
+    "size": 179760,
+    "off": 1721998
+   }
+  ],
+  "iso21496": [
+   [
+    "00000000",
+    4
+   ],
+   [
+    "000000004000000000000f42400020c85d000f424000000000000f424000211c45000f4240000f4240000f424000000000000f424000000000000f4240",
+    61
+   ]
+  ],
+  "subs": [
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case66_sub0.jpg",
+    "mode": "RGB",
+    "size": [
+     4096,
+     3072
+    ],
+    "bytes": 1723358,
+    "magic": "ffd8ffe1"
+   },
+   {
+    "path": "/home/ubuntu/workspace/contest/CSIG-2026/Moebius/analysis_tone/gm/case66_sub1.jpg",
+    "mode": "RGB",
+    "size": [
+     2048,
+     1536
+    ],
+    "bytes": 179760,
+    "magic": "ffd8ffe2"
+   }
+  ]
+ }
+}

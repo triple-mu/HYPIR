@@ -1,8 +1,10 @@
 """EXIF GPS -> 国家/地区。Natural Earth 50m 多边形 + matplotlib.path 点在多边形内判定。"""
+import os
 import json, numpy as np
 from matplotlib.path import Path
 _P = None
-def _load(fp="/home/ubuntu/workspace/contest/CSIG-2026/pd12m_recon/world.geojson"):
+# Natural Earth 1:50m 国界（公有领域），随脚本一起放在同目录
+def _load(fp=os.path.join(os.path.dirname(__file__), "ne_50m_countries.geojson")):
     global _P
     if _P is not None: return _P
     g = json.load(open(fp)); out = []

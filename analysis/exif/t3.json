@@ -1,0 +1,2448 @@
+{
+ "case1.jpg": {
+  "size": 7172049,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62032
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64852
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP15",
+    "j9?>155157:@C369<>><=><?",
+    29299
+   ],
+   [
+    "APP14",
+    "\u00f8\u00b5\u00f2\u00ea\u00a8\u00ed\u00e2\u0083\u00c5\u00c2u\u00b2\u00b0b\u009c\u009bX\u008f\u008f_\u0099\u009b[\u0094",
+    43006
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 2,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case2.jpg": {
+  "size": 7587014,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    61944
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64852
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP7",
+    "b_[WVWVX\\Y]n\\\\MTSQOOPWZ]",
+    34920
+   ],
+   [
+    "APP5",
+    "\u00e8\u00e7\u00e9\u00d5\u00aa\u00b5\u008d\u009eJ\u008c\u0094\u00aa}k\u0098pQ/ABBBBC",
+    57194
+   ],
+   [
+    "APP14",
+    "JC,-,,**-/03-)&)'(&(jo\u0087(",
+    28761
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 2,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case3.jpg": {
+  "size": 7151931,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    61928
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64852
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP2",
+    "\u009c\u0099\u009b\u009b\u009f\u0093\u00a0\u00a1\u00a7\u0081z\u0082\u0082\u0081\u0080|twoiv\u0086ib",
+    42911
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 4,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case4.jpg": {
+  "size": 7924148,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    61928
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64852
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP14",
+    "\u00fe\u00ee\u00ff\u00f0\u00dc\u00f8\u00e8\u00ca\u00bd\u00b8\u0095\u00ec\u00d9\u00bf~\u0087ykne\u00be\u00ba\u00a8]",
+    54774
+   ],
+   [
+    "APP13",
+    "\u00f0\u00da\u00e6\u00cf\u00ac\u00d9\u009eq\u00c0\u0097n\u00ef\u00d5\u00b7\u00d2\u00c4\u00a9\u0092\u0083z\u00c7\u00b9\u009c\u00c6",
+    54783
+   ],
+   [
+    "APP12",
+    "uo\u0006\r\u000b\b\u000f\u000e\u000f\u0018\u0015*94Yk\\\u00d2\u00d0\u00c3',,'",
+    55655
+   ],
+   [
+    "APP14",
+    "\u00cb\u0097\u00ad\u00a2\u00c0\u00cd\u00c6\u00a8\u00ba\u00b8q\u0084r\u00a2\u00b9\u00a1\u00df\u00f7\u00dc\u0085\u0087s\u00c8\u00d8",
+    50900
+   ],
+   [
+    "APP6",
+    "'#\u001e\u001a\u0019\u001d\u0018\u0018\u0019\u001a\u001c\u001f\u001d\u001e.\u001dN\u0013*\u008a!=Q=",
+    37196
+   ],
+   [
+    "APP15",
+    "\u00d5\u00d5\u00e0\u00f2\u00f3\u00e6\u00dd\u00d5\u00bfyjbmnp\u00b9\u00b8\u00b4\u00ae(-BIH",
+    60380
+   ],
+   [
+    "APP1",
+    "\u009c\u0085{ldc\\\\TSRQPMNNW\\LIGIIG",
+    50865
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 2,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case5.jpg": {
+  "size": 7492032,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1300
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    61824
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64852
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP15",
+    "7+K:,\u001c\u0011\u000e\u0007\u0005\u0004\u0006\u0004\u0003\u0007\u0004\u0003\u0007\u0004\u0003\u0007\u0004\u0003\u000f",
+    41808
+   ],
+   [
+    "APP4",
+    "\u00e6\u00a6\u00ff\u00e2\u00a0\u00ff\u00df\u009f\u00ff\u00de\u00a0\u00ff\u00db\u00a1\u00ff\u00d9\u00a1\u00ff\u00d7\u009d\u00ff\u00cb\u0099\u00ff",
+    41471
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 2,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case6.jpg": {
+  "size": 3756351,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case7.jpg": {
+  "size": 2261240,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case8.jpg": {
+  "size": 3075543,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case9.jpg": {
+  "size": 1842386,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case10.jpg": {
+  "size": 1520702,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case11.jpg": {
+  "size": 1062061,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case12.jpg": {
+  "size": 2925774,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case13.jpg": {
+  "size": 2822280,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case14.jpg": {
+  "size": 1438723,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case15.jpg": {
+  "size": 1265778,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case16.jpg": {
+  "size": 1155858,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case17.jpg": {
+  "size": 2987317,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case18.jpg": {
+  "size": 1071279,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case19.jpg": {
+  "size": 2563014,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case20.jpg": {
+  "size": 3146747,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case21.jpg": {
+  "size": 1332268,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case22.jpg": {
+  "size": 1389740,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case23.jpg": {
+  "size": 1608100,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case24.jpg": {
+  "size": 1189635,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case25.jpg": {
+  "size": 985258,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case26.jpg": {
+  "size": 1880302,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case27.jpg": {
+  "size": 3167582,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case28.jpg": {
+  "size": 1749140,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case29.jpg": {
+  "size": 1035979,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case30.jpg": {
+  "size": 2767607,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case31.jpg": {
+  "size": 1677208,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case32.jpg": {
+  "size": 3368110,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case33.jpg": {
+  "size": 2079838,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case34.jpg": {
+  "size": 2040915,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case35.jpg": {
+  "size": 3784149,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case36.jpg": {
+  "size": 2232462,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case37.jpg": {
+  "size": 1528774,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case38.jpg": {
+  "size": 9135707,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1342
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    61888
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    57288
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    273
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 7,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case39.jpg": {
+  "size": 2628674,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case40.jpg": {
+  "size": 2413967,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case41.jpg": {
+  "size": 1983674,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case42.jpg": {
+  "size": 3010521,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case43.jpg": {
+  "size": 2391299,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case44.jpg": {
+  "size": 2762433,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case45.jpg": {
+  "size": 2277305,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case46.jpg": {
+  "size": 1569236,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case47.jpg": {
+  "size": 1490597,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case48.jpg": {
+  "size": 1766274,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case49.jpg": {
+  "size": 2008525,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case50.jpg": {
+  "size": 2205460,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case51.jpg": {
+  "size": 1819228,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case52.jpg": {
+  "size": 1860183,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case53.jpg": {
+  "size": 2286136,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case54.jpg": {
+  "size": 4126613,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case55.jpg": {
+  "size": 2652617,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case56.jpg": {
+  "size": 1564671,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case57.jpg": {
+  "size": 1333367,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case58.jpg": {
+  "size": 1892299,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case59.jpg": {
+  "size": 2967053,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case60.jpg": {
+  "size": 1585866,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case61.jpg": {
+  "size": 3007363,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case62.jpg": {
+  "size": 1890175,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case63.jpg": {
+  "size": 2356700,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case64.jpg": {
+  "size": 8067514,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    676
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62228
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64924
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP5",
+    "\u00cc\u009e\u009aiV9%\u001c\u000e\u000f\u0012\u0015\u0019\u0011\u000e\r\u0016\u0014\u000b\f\u0013\u0014\u0010\u0010",
+    42612
+   ],
+   [
+    "APP6",
+    "RVgg^VCJ;)3Rh5\u0081\u009ar\u009bYHMe\u0018\u0018",
+    21555
+   ],
+   [
+    "APP2",
+    "1*-;W\u00be\u00efl[QI@\u0018.*AR\\6/\u001a\u001b\u001b$",
+    26962
+   ],
+   [
+    "APP11",
+    "\u0098\u0081ysiG61M=6VF>MA:>.,B2.@",
+    51387
+   ],
+   [
+    "APP4",
+    "\u008e\u00b7\u00d6\u0085\u008eTVc\u008ep\u00d4\u00e4\u00cd\u00cf\u00dd\u00d6\u00d2\u009a\u0097I>qF,",
+    50081
+   ],
+   [
+    "APP8",
+    "r\u001c\u0016\u000b:5026C76H5714B9:KC$$",
+    47863
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 2,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case65.jpg": {
+  "size": 8425544,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    676
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62228
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64924
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP0",
+    "\u0091&M?\":2\"D;-PAJ\u007fq0yd,LA\u001b*",
+    23455
+   ],
+   [
+    "APP14",
+    "\u0097\u008d\u0081\u007f\u0082q\u0081om_WMNJGCMD\u009d\u00ca`\u00b5\u00f7\u009e",
+    36495
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 3,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case66.jpg": {
+  "size": 7907034,
+  "apps": [
+   [
+    "APP1",
+    "Exif",
+    1312
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    34
+   ],
+   [
+    "APP2",
+    "MPF",
+    88
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    676
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    26
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP2",
+    "MPF",
+    44
+   ],
+   [
+    "APP2",
+    "urn:iso:std:iso:ts:21496",
+    91
+   ],
+   [
+    "APP8",
+    "ITUT35&",
+    278
+   ],
+   [
+    "APP2",
+    "ICC_PROFILE",
+    700
+   ],
+   [
+    "APP0",
+    "JFIF",
+    16
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62228
+   ],
+   [
+    "APP8",
+    "HUAWEI",
+    62972
+   ],
+   [
+    "APP9",
+    "HUAWEI",
+    65492
+   ],
+   [
+    "APP10",
+    "HUAWEI",
+    53404
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    64924
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    62244
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    50708
+   ],
+   [
+    "APP7",
+    "HUAWEI",
+    36900
+   ],
+   [
+    "APP2",
+    "\u00ab\u00cd\u00ad\u00a4\u00de\u00db\u00e2\u00f7\u00ce\u00d6\u00e9\u00ed\u00f5\u00ff\u00da\u00dd\u00e9\u00ee\u00f5\u00ec\u00e3\u00f1\u00e4\u00e3",
+    47051
+   ]
+  ],
+  "mpf": [
+   [],
+   [
+    "0xb000",
+    "0xb001"
+   ]
+  ],
+  "n_soi": 4,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case67.jpg": {
+  "size": 1957747,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case68.jpg": {
+  "size": 1971604,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case69.jpg": {
+  "size": 1312452,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case70.jpg": {
+  "size": 1674458,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case71.jpg": {
+  "size": 1396437,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case72.jpg": {
+  "size": 2529017,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case73.jpg": {
+  "size": 1784755,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case74.jpg": {
+  "size": 3430238,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case75.jpg": {
+  "size": 2286370,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case76.jpg": {
+  "size": 2300435,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case77.jpg": {
+  "size": 1881472,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case78.jpg": {
+  "size": 2839118,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case79.jpg": {
+  "size": 1389560,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case80.jpg": {
+  "size": 1885315,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case81.jpg": {
+  "size": 1994140,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case82.jpg": {
+  "size": 1387341,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case83.jpg": {
+  "size": 2578874,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case84.jpg": {
+  "size": 2843964,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case85.jpg": {
+  "size": 1780912,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case86.jpg": {
+  "size": 3040028,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case87.jpg": {
+  "size": 2427915,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case88.jpg": {
+  "size": 2043389,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case89.jpg": {
+  "size": 1553366,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case90.jpg": {
+  "size": 2684067,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case91.jpg": {
+  "size": 4184685,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case92.jpg": {
+  "size": 1848493,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case93.jpg": {
+  "size": 1799500,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case94.jpg": {
+  "size": 2933287,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case95.jpg": {
+  "size": 1612457,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case96.jpg": {
+  "size": 3646961,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case97.jpg": {
+  "size": 1597591,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case98.jpg": {
+  "size": 3637708,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case99.jpg": {
+  "size": 3396422,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case100.jpg": {
+  "size": 2200224,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case1_gt.png": {
+  "size": 3461974,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "case1_lq.jpg": {
+  "size": 1633028,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u9a8c\u8bc1\u96c6/case2_gt.png": {
+  "fmt": "notjpeg"
+ },
+ "case2_lq.jpg": {
+  "size": 1526430,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ },
+ "/home/ubuntu/workspace/contest/CSIG-2026/\u8d5b\u9898\u4e8c/\u9a8c\u8bc1\u96c6/case3_gt.jpg": {
+  "fmt": "notjpeg"
+ },
+ "case3_lq.jpg": {
+  "size": 1479334,
+  "apps": [
+   [
+    "APP0",
+    "JFIF",
+    16
+   ]
+  ],
+  "mpf": null,
+  "n_soi": 1,
+  "xmp_len": 0,
+  "xmp_flags": {}
+ }
+}

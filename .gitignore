@@ -17,3 +17,11 @@ __pycache__
 *.safetensors
 *.parquet
 submit/*/weights/
+
+# 提交产物：权重与编译好的 CUDA 扩展不入库
+# 必须用 ../csig/ 那个 py39+torch2.5.1+cu118 的 venv，不能用容器默认 python：
+#   docker exec csig2026 bash -lc "cd /workspace && CSIG_CUDA_ARCH_LIST=7.0+PTX \
+#     /workspace/csig/bin/pip install --target HYPIR-fork/submit/model_dir \
+#     HYPIR-fork/submit/csig_ops_ext --no-build-isolation"
+submit/model_dir/custom_op/
+submit/model_dir/custom_op-*.dist-info/
