@@ -1200,8 +1200,15 @@ def export_weights(src: Union[str, Path], dst: Union[str, Path], dtype: torch.dt
 
     for fname in ("vocab.json", "merges.txt"):
         (dst / "tokenizer" / fname).write_bytes((src / "tokenizer" / fname).read_bytes())
-    with open(dst / "config.yaml", "w") as f:
-        yaml.safe_dump(DEFAULTS, f, sort_keys=False)
+    # config.yaml 是调过的产物（op_backend 被特意钉成 cuda，注释里记着为什么），
+    # 而这里只有 DEFAULTS。重新导出权重时把它覆写成 op_backend: auto 会静默改变
+    # 后端选择，从而改变时延——而时延是进分的。已存在就不动。
+    cfg_path = dst / "config.yaml"
+    if cfg_path.exists():
+        print(f"保留已有的 {cfg_path.name}（未覆写）")
+    else:
+        with open(cfg_path, "w") as f:
+            yaml.safe_dump(DEFAULTS, f, sort_keys=False)
 
     size_gb = (dst / WEIGHTS_FILE).stat().st_size / 1024 ** 3
     print(f"已导出到 {dst}: {WEIGHTS_FILE} ({size_gb:.2f} GB), config.yaml, tokenizer/")
