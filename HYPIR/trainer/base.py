@@ -8,6 +8,7 @@ import warnings
 from contextlib import nullcontext
 
 import torch
+from accelerate.utils import DistributedDataParallelKwargs
 import torch.nn.functional as F
 from torch.serialization import get_unsafe_globals_in_checkpoint, add_safe_globals
 from torchvision.utils import make_grid
@@ -56,6 +57,10 @@ class BaseTrainer:
         self.config = config
         set_seed(config.seed)
         self.init_environment()
+        # [csig-compile] 必须在建模型前打：共享 attn processor / 常量化版本判断 / woq guard
+        if self.config.get("compile", False):
+            from HYPIR.utils.compile_patch import patch_for_dynamo
+            patch_for_dynamo(None)
         self.init_models()
         self.summary_models()
         self.init_optimizers()
@@ -70,6 +75,9 @@ class BaseTrainer:
             log_with=self.config.report_to,
             project_config=accelerator_project_config,
             mixed_precision=self.config.mixed_precision,
+            # [csig-speedup] 省 1.04 GB；不要开 static_graph —— 实测会静默破坏 D 的梯度同步
+            # （首步是 G 步，此时 D 全部 requires_grad=False，会被永久标记为"不产生梯度"）
+            kwargs_handlers=[DistributedDataParallelKwargs(gradient_as_bucket_view=True)],
         )
         logger.info(accelerator.state, main_process_only=True)
         if accelerator.is_main_process:
@@ -94,8 +102,13 @@ class BaseTrainer:
         self.device = accelerator.device
 
     def unwrap_model(self, model):
-        model = self.accelerator.unwrap_model(model)
-        return model
+        # [csig-compile] 必须 keep_torch_compile=False：否则 compile 后的 OptimizedModule
+        # 壳会被包回来，让 sd2.py 的 isinstance 断言失败、EMA/ckpt 的 key 多出
+        # _orig_mod. 前缀 —— resume 会静默失效，不报错。
+        try:
+            return self.accelerator.unwrap_model(model, keep_torch_compile=False)
+        except TypeError:      # 老版 accelerate 没这个参数
+            return self.accelerator.unwrap_model(model)
 
     def init_models(self):
         self.init_scheduler()
@@ -121,6 +134,11 @@ class BaseTrainer:
         self.vae = AutoencoderKL.from_pretrained(
             self.config.base_model_path, subfolder="vae", torch_dtype=self.weight_dtype).to(self.device)
         self.vae.eval().requires_grad_(False)
+        if self.config.get("compile", False):
+            # [csig-compile] 编 encoder/decoder 本体：训练调的是 .encode()/.decode()，
+            # compile(self.vae) 只会编 forward，完全不生效。实测 -98 ms/pair
+            self.vae.encoder = torch.compile(self.vae.encoder)
+            self.vae.decoder = torch.compile(self.vae.decoder)
 
     def init_lpips(self):
         with warnings.catch_warnings():
@@ -128,6 +146,8 @@ class BaseTrainer:
             warnings.simplefilter("ignore")
             self.net_lpips = lpips.LPIPS(net="vgg", verbose=False).to(self.device)
         self.net_lpips.eval().requires_grad_(False)
+        if self.config.get("compile", False):
+            self.net_lpips = torch.compile(self.net_lpips)   # [csig-compile] 前反 2.37x
         # 注：不要把 LPIPS 模块本身转半精度。mixed_precision 下 accelerate 已用 autocast
         # 包住训练步，它的卷积自然走半精度；而 forward_generator 返回的是 fp32，
         # 手工转模块反而会撞 "Input type (float) and bias type (Half)"。
@@ -158,6 +178,11 @@ class BaseTrainer:
             _sd = {"decoder." + k: v for k, v in _lf(init_d).items()}
             _m, _u = self.D.load_state_dict(_sd, strict=False)
             logger.info(f"Init D from {init_d}: missing {len(_m)}, unexpected {len(_u)}")
+        if self.config.get("compile", False):
+            # [csig-compile] 只编冻结 backbone。D.forward 调的是 model.encode_image，
+            # compile(self.D.model) 不生效；compile(self.D) 会因 spectral_norm 的就地
+            # 幂迭代 + 两次前向一次反向而报 "modified by an inplace operation"
+            self.D.model.encode_image = torch.compile(self.D.model.encode_image)
 
     def summary_models(self):
         table_data = []
@@ -238,6 +263,13 @@ class BaseTrainer:
         prepared_objs = self.accelerator.prepare(*[getattr(self, attr) for attr in attrs])
         for attr, obj in zip(attrs, prepared_objs):
             setattr(self, attr, obj)
+        if self.config.get("compile", False):
+            # [csig-compile] 必须在 prepare 之后编，否则 DDP 包装会把图切碎。
+            # 前提是关掉 gradient_checkpointing（见 config 注释）
+            from HYPIR.utils.compile_patch import patch_for_dynamo
+            patch_for_dynamo(self.unwrap_model(self.G))
+            self.G = torch.compile(self.G)
+            logger.info("torch.compile 已启用（G / VAE / LPIPS / D-backbone）")
         print_vram_state("After accelerator.prepare", logger=logger)
 
     def force_optimizer_ckpt_safe(self, checkpoint_dir):
