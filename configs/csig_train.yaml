@@ -21,7 +21,9 @@ data_config:
   train:
     # 实测：worker 只读字节 0.01 ms/张，解码在 GPU 上批量做（batch24 时 3.5 ms/张），
     # 所以 num_workers 不需要大。原版 2 workers + CPU 全解码只有 14 样本/秒，是硬瓶颈。
-    batch_size: 24
+    # batch 8 是关梯度检查点后 H200(144G) 上的实测上限：峰值 ~95 GB/卡，24 直接 OOM。
+    # 4 卡 x 8 = 有效 batch 32，与 P2 曲线可比，换卡数时要同步调这里。
+    batch_size: 8
     dataloader_num_workers: 8
     collate_fn: HYPIR.dataset.csig.csig_collate
     dataset:
