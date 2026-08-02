@@ -41,6 +41,14 @@ def patch_for_dynamo(unet=None):
             logger.warning("compile_patch: 共享 attn processor 失败（跳过）: %s", e)
     torch._dynamo.config.cache_size_limit = 64
     torch._dynamo.config.optimize_ddp = False
+    # inductor 的 donated buffer 优化会假设反向只走一次且不 retain_graph。
+    # 这条管线里 G 的输出同时喂给 MSE/LPIPS/D 三路损失，反向图结构不满足该假设，
+    # 会报 "compiled with non-empty donated buffers which requires create_graph=False"。
+    try:
+        import torch._functorch.config as _fc
+        _fc.donated_buffer = False
+    except Exception:
+        pass
 
     # --- (2) 常量化 diffusers 的 is_torch_version ----------------------------
     try:
