@@ -25,3 +25,4 @@ submit/*/weights/
 #     HYPIR-fork/submit/csig_ops_ext --no-build-isolation"
 submit/model_dir/custom_op/
 submit/model_dir/custom_op-*.dist-info/
+submit/output_dir/

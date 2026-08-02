@@ -8,12 +8,18 @@ from __future__ import annotations
 
 import glob
 import os
+import sys
 
 import torch  # 必须先加载 libc10 / libtorch，再 dlopen _C
 
 # 四个算子全部经 TORCH_LIBRARY 注册、无 pybind11 绑定，故 .so 里没有 PyInit__C，
 # 不能 `import _C`；用 torch.ops.load_library dlopen 触发注册（纯算子扩展的标准做法）。
-_SO = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "_C*.so")))
+# 同一棵源码树被两个 python 编过时会留下多颗 _C*.so，而它们链的 CUDA 运行时可能不同
+# （容器系统 python3.10 配 cu12，评测机对齐的 py39 venv 配 cu118）。按解释器 ABI 标签挑，
+# 不能直接取排序第一个——字典序下 "310" < "39"，正好每次都挑中错的那颗。
+_TAG = "cpython-%d%d" % sys.version_info[:2]
+_ALL = sorted(glob.glob(os.path.join(os.path.dirname(__file__), "_C*.so")))
+_SO = [p for p in _ALL if _TAG in os.path.basename(p)] or _ALL
 if not _SO:
     raise ImportError(
         "custom_op: 找不到 _C*.so，请先编译："
