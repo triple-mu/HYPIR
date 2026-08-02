@@ -1,9 +1,38 @@
 import torch
 from torch import nn
 from vision_aided_loss.cv_discriminator import BlurPool, spectral_norm
-from vision_aided_loss.cv_losses import multilevel_loss
 
 from HYPIR.model.backbone import ImageOpenCLIPConvNext
+
+
+class MultiLevelLoss(nn.Module):
+    """vision_aided_loss.multilevel_loss 的等价实现，去掉每次调用的 H2D 拷贝。
+
+    上游是 `target = alpha*torch.tensor(1.)` 再 `target.expand_as(each).to(each.device)`：
+    target 建在 CPU 可分页内存上，expand_as 只是 0-stride 视图，`.to()` 要先在 CPU 上
+    物化成完整形状再拷过去 —— 每个 level 一次阻塞式 H2D。D 步两次调用 x 4 个 level
+    = 8 次，G 步再 4 次，每次都让 CUDA 流停一下。实测 py-spy 采样里占 23%。
+    torch.full_like 直接在卡上生成。dtype 必须显式钉成 float32：上游的 target 是
+    `alpha*torch.tensor(1.)`（fp32），`.to(device)` 只换设备不换 dtype，所以 BCE 实际
+    在 fp32 下算；跟着 each 变 fp16 会让损失差 2e-3，是真实的精度变化而非噪声。
+    """
+
+    def __init__(self, alpha=1.0):
+        super().__init__()
+        self.lossfn = nn.BCEWithLogitsLoss(reduction="none")
+        self.alpha = alpha
+
+    def forward(self, input, for_real=True, for_G=False):
+        if for_G:
+            for_real = True
+        value = self.alpha if for_real else 0.0
+        loss = 0
+        for each in input:
+            loss_ = self.lossfn(each, torch.full_like(each, value, dtype=torch.float32))
+            if len(loss_.size()) > 2:
+                loss_ = loss_.mean([1, 2]).reshape(-1, 1)
+            loss = loss + loss_
+        return loss
 
 
 class MultiLevelDConv(nn.Module):
@@ -59,7 +88,7 @@ class ImageConvNextDiscriminator(nn.Module):
         self.model = ImageOpenCLIPConvNext(precision=precision)
         self.model.eval().requires_grad_(False)
         self.decoder = MultiLevelDConv(level=4, in_ch1=[384, 768, 1536], in_ch2=1024, out_ch=512, down=2)
-        self.loss_fn = multilevel_loss(alpha=0.8)
+        self.loss_fn = MultiLevelLoss(alpha=0.8)   # [csig-speedup] 见上面的类注释
         self.register_buffer("image_mean", torch.tensor([0.48145466, 0.4578275, 0.40821073], dtype=torch.float32))
         self.register_buffer("image_std", torch.tensor([0.26862954, 0.26130258, 0.27577711], dtype=torch.float32))
 
