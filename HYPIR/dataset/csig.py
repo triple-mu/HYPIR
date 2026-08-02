@@ -34,17 +34,49 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision.io import ImageReadMode, decode_jpeg
 
-# 退化参数，按感知分标定到中位 p_rel 0.989（真实 LQ 为 1.000）。
-# 标定过程：pole=1、各向同性、无空间变化时 sigma=1.8/2.4/2.8/3.2 分别给出
-# p_rel 2.419/1.492/1.091/0.803，即 sigma~2.9 对应真实强度；下面区间以此为中心展开。
-SIGMA_RANGE = (1.85, 3.45)
-ANISO_RANGE = (1.0, 1.45)     # 长短轴比，实测 1.2-1.4
-POLE_RANGE = (0.9, 2.1)       # 极点阶数；纯高斯已被实测拒绝（重尾更贴）
+# 退化参数。
+#
+# v1（窄）曾按感知分标定到中位 p_rel 0.989，实测 sigma~2.9 对应真实强度，区间以此展开：
+#   SIGMA_RANGE=(1.85,3.45) ANISO=(1.0,1.45) POLE=(0.9,2.1) JPEG 钉死 q95 无噪声
+# 结果是灾难：模型在这套退化上从 19.0% 涨到 45.6%，线上却从 44.04 掉到 20.76。
+#
+# 判决实验（csig/domain_split.py，赛题验证对，同一批图只换退化方式）：
+#   赛题内容 + 合成退化   基线 16.3%  ->  微调 44.7%
+#   赛题内容 + 真实退化   基线 13.5%  ->  微调 -0.1%
+# 内容域没问题，问题就是退化。而配对实验（csig/degrade_ablate.py）显示合成与真实的
+# ΔFR +0.012 / ΔNR +0.002，两个感知指标都匹配得很好。
+#
+# **匹配 FR/NR 两个标量 != 匹配退化算子。** 两者落在同一感知分位置，却是不同的变换；
+# 模型学会的是求逆我那一个特定算子。真实 LQ 的 FR 0.384 经微调模型只到 0.391——几乎没动。
+#
+# v2 的目标因此改成：让真实退化落进合成分布的**支撑集内部**，而不是让均值相等。
+# 具体两条改动：
+#   1. 加入真实重采样链路。v1 是纯频域低通（给频率响应乘衰减），永远不产生**混叠**；
+#      而真实的降采样-升采样必然带混叠与振铃。这是「感知分相同、算子不同」的关键缺口。
+#   2. 全面放宽区间，并加回轻度噪声与 JPEG 质量范围。v1 为了"精确匹配实测中心"而收窄，
+#      恰恰是这个收窄让模型失去泛化——原版 HYPIR 用 RealESRGAN 那套很宽的分布，
+#      基线在真实退化上能拿 13.5% 正是因为它不专精于任何单一算子。
+SIGMA_RANGE = (0.6, 4.6)      # v1 (1.85,3.45)，中心不变、两端大幅放开
+ANISO_RANGE = (1.0, 2.0)      # v1 (1.0,1.45)
+POLE_RANGE = (0.7, 3.0)       # v1 (0.9,2.1)；极点阶数，纯高斯已被实测拒绝
 SPATIAL_VAR = 0.4             # 图内 sigma 变化，实测 ±40%
 AFFINE_A = (1.00, 1.10)
 AFFINE_B = (-14.0 / 255.0, 0.0)
-JPEG_QUALITY = 95             # 字节级确认：128 个量化系数与 IJG q95 全等
+JPEG_RANGE = (70, 98)         # v1 钉死 95（字节级确认真实 LQ 是 IJG q95）。
+                              # 仍以 95 为常见值，但让模型见过别的质量，别把 q95 的
+                              # 块效应当成唯一先验
+JPEG_QUALITY = 95             # 兼容旧引用；单值路径仍用它
 P_AFFINE = 0.6
+
+# --- v2 新增 ---
+P_RESAMPLE = 0.65             # 走真实重采样链路（而非纯频域低通）的概率
+SCALE_RANGE = (1.6, 5.0)      # 降采样倍数；实测真实退化的感知强度约等于 7x 重采样，
+                              # 但那是频域标定值，这里给一个覆盖它的宽区间
+NOISE_SIGMA = (0.0, 2.5 / 255.0)   # 真实 LQ 实测噪声 0.014-0.090 灰阶（几乎没有）。
+                              # 加回一点点不是为了教降噪，是为了别让"零噪声"成为
+                              # 模型赖以识别输入的特征
+P_CLEAN = 0.04                # 少量近乎不退化的样本：教会模型"输入已经够好就别动"。
+                              # v1 里模型永远面对重退化输入，于是无条件大改
 
 
 class CSIGDataset(Dataset):
@@ -139,6 +171,29 @@ class CSIGBatchTransform:
         resp = 1.0 / (1.0 + (u * u + v * v) / (f0 * f0)) ** pole.view(b, 1, 1)
         return torch.fft.ifft2(torch.fft.fft2(x) * resp.unsqueeze(1)).real
 
+    def _resample_chain(self, x):
+        """降采样再升回原尺寸。与 _lowpass 的关键差别是**会产生混叠**。
+
+        频域低通只是把高频乘小，信息干净地消失；而真实的降采样把高频折叠到低频，
+        升采样再引入插值核的振铃。这两类失真的可逆性完全不同，模型学会求逆前者
+        并不代表会求逆后者——v1 只有前者，这是它在真实数据上失效的直接原因。
+
+        下采样与上采样各自独立抽插值方式：真实 ISP 链路里这两步未必用同一个核。
+        逐样本抽倍率，所以按样本循环（batch 8，开销可忽略）。
+        """
+        b, _, h, w = x.shape
+        modes = ("bilinear", "bicubic", "area")
+        outs = []
+        for i in range(b):
+            s = float(torch.empty(1).uniform_(*SCALE_RANGE))
+            dm = modes[int(torch.randint(len(modes), (1,)))]
+            um = modes[int(torch.randint(len(modes) - 1, (1,)))]   # 上采样不用 area
+            kw_d = {} if dm == "area" else {"align_corners": False}
+            small = F.interpolate(x[i:i + 1], size=(max(int(h / s), 8), max(int(w / s), 8)),
+                                  mode=dm, **kw_d)
+            outs.append(F.interpolate(small, size=(h, w), mode=um, align_corners=False))
+        return torch.cat(outs).clamp(0, 1)
+
     @torch.no_grad()
     def __call__(self, batch: Dict) -> Dict:
         bufs = batch[self.hq_key]
@@ -149,7 +204,12 @@ class CSIGBatchTransform:
         def U(lo, hi):
             return torch.empty(b, device=device).uniform_(lo, hi)
 
-        # 1) 低通（含图内空间变化：两档模糊 + 平滑随机掩码混合）
+        # 1) 模糊。两条支路二选一，逐样本抽：
+        #    a) 频域重尾低通（v1 唯一的那条）——干净的频率衰减，不产生混叠
+        #    b) 真实重采样链路——降采样再升回来，必然带混叠与振铃
+        #    真实退化里两种成分都有，v1 只有 a，模型于是只会求逆 a。
+        use_rs = torch.rand(b, device=device) < P_RESAMPLE
+
         sigma = U(*SIGMA_RANGE)
         lo = self._lowpass(hq, sigma * (1 - SPATIAL_VAR), U(*ANISO_RANGE),
                            U(0.0, float(np.pi)), U(*POLE_RANGE))
@@ -158,6 +218,18 @@ class CSIGBatchTransform:
         m = torch.rand(b, 1, 8, 8, device=device)
         m = F.interpolate(m, size=(h, w), mode="bicubic", align_corners=False).clamp(0, 1)
         out = lo * (1 - m) + hi * m
+
+        if bool(use_rs.any()):
+            # 逐样本抽倍率与插值方式；下采样与上采样各自独立选，因为真实 ISP 链路
+            # 里这两步未必用同一个核
+            rs = self._resample_chain(hq)
+            sel = use_rs.view(b, 1, 1, 1).float()
+            out = out * (1 - sel) + rs * sel
+
+        # 少量近乎不退化的样本：v1 里模型永远面对重退化输入，于是无条件大改；
+        # 真实测试集里有干净图（取证查出 9 张几乎未退化），必须教会它"别动"
+        keep = (torch.rand(b, device=device) < P_CLEAN).view(b, 1, 1, 1).float()
+        out = out * (1 - keep) + hq * keep
 
         # 2) 逐通道仿射 + clip（clip 到 0 产生黑位压死，实测真实数据有 4.5-7.8% 像素死在 0）
         do = (torch.rand(b, device=device) < P_AFFINE).float().view(b, 1, 1, 1)
@@ -170,7 +242,15 @@ class CSIGBatchTransform:
             from HYPIR.dataset.diffjpeg import DiffJPEG
             self.jpeger = DiffJPEG(differentiable=False).to(device)
         self.jpeger.to(out)
-        out = self.jpeger(out, quality=out.new_full((b,), float(self.jpeg_quality)))
+        # v1 钉死 q95。真实 LQ 确实是 IJG q95（字节级确认），但把它当成唯一先验会让
+        # 模型把 q95 的块效应当作输入的识别特征。给个范围，95 仍是常见值。
+        q = torch.empty(b, device=device).uniform_(*JPEG_RANGE)
+        out = self.jpeger(out, quality=q)
+
+        # 轻度噪声：真实 LQ 实测几乎无噪，加一点不是为了教降噪，
+        # 是为了别让"零噪声"成为模型赖以判断的特征
+        ns = torch.empty(b, 1, 1, 1, device=device).uniform_(*NOISE_SIGMA)
+        out = (out + torch.randn_like(out) * ns).clamp(0, 1)
 
         lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
         return {"GT": hq, "LQ": lq, **{k: batch[k] for k in self.extra_keys}}
