@@ -19,7 +19,7 @@ import torch.nn.functional as F
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 from HYPIR.dataset.csig import (SIGMA_RANGE, ANISO_RANGE, POLE_RANGE, SPATIAL_VAR,
-                                AFFINE_A, AFFINE_B, JPEG_RANGE, P_AFFINE,
+                                AFFINE_A, AFFINE_CHROMA, AFFINE_PIVOT, AFFINE_B_JITTER, JPEG_RANGE, P_AFFINE,
                                 P_RESAMPLE, SCALE_RANGE, NOISE_SIGMA, P_CLEAN,
                                 CSIGBatchTransform)
 
@@ -58,10 +58,11 @@ def degrade(hq, tf, seed):
         info.append("（本次抽中免退化）")
     do = float(torch.rand(1, generator=g)) < P_AFFINE
     if do:
-        ca = (torch.rand(b, 3, 1, 1, generator=g) * (AFFINE_A[1] - AFFINE_A[0]) + AFFINE_A[0]).to(dev)
-        cb = (torch.rand(b, 3, 1, 1, generator=g) * (AFFINE_B[1] - AFFINE_B[0]) + AFFINE_B[0]).to(dev)
+        gg = (torch.rand(b,1,1,1, generator=g)*(AFFINE_A[1]-AFFINE_A[0])+AFFINE_A[0]).to(dev)
+        ca = gg + (torch.rand(b,3,1,1, generator=g)*2-1).to(dev)*AFFINE_CHROMA
+        cb = (1-ca)*AFFINE_PIVOT + (torch.rand(b,3,1,1, generator=g)*2-1).to(dev)*AFFINE_B_JITTER
         out = (out * ca + cb).clamp(0, 1)
-        info.append("仿射")
+        info.append("色调 a=%.3f" % float(gg))
     else:
         out = out.clamp(0, 1)
     if tf.jpeger is None:

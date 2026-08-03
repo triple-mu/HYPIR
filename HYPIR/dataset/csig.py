@@ -68,11 +68,22 @@ POLE_RANGE = (1.8, 4.5)       # v1 (0.9,2.1) -> v2 (0.7,3.0) -> 现在 (1.8,4.5)
                               # 合成的滚降太平缓——真实是「低频保住、然后陡降」。
                               # p 越大拐点越陡，故整体上移。
 SPATIAL_VAR = 0.4             # 图内 sigma 变化，实测 ±40%
-# 1D MTF 实测：真实 LQ 在低频有 MTF>1 的情况（case3 是 1.05~1.16），说明对比度是
-# **增强**的一侧也存在。原来 a>=1.00 配纯负偏置只能变暗，合成永远够不到真实那一侧，
-# 低频落点固定在 70 分位上下。改成双向。
-AFFINE_A = (0.92, 1.12)
-AFFINE_B = (-14.0 / 255.0, 6.0 / 255.0)
+# 色调变换按实测重建（csig/tone_check.py：先按等效强度模糊再逐通道最小二乘，
+# 把模糊本身对统计的影响剔掉）：
+#     case1  a=(0.897,0.909,0.921)  b*255=(+8.8,+10.3,+8.7)
+#     case2  a=(0.955,0.986,0.973)  b*255=(+0.9,-0.2,+0.9)
+#     case3  a=(1.155,1.085,1.150)  b*255=(-21.5,-11.4,-20.7)
+#
+# 两条结论：
+# 1. **三通道增益彼此很近**（最大差 0.024~0.070）。原来逐通道独立采样、通道间差可达
+#    0.20，是实测的 3~8 倍——目视能直接看到粉紫/黄绿色偏，而真实 LQ 没有任何色偏。
+#    改成全局增益 + 通道间小扰动。
+# 2. **偏置与增益强相关**：a>1 配负偏置、a<1 配正偏置，是「保持中间调、改变对比度」
+#    的特征，不是两个独立自由度。故 b 由 a 推出，只留少量残差。
+AFFINE_A = (0.88, 1.18)              # 实测 0.897~1.155，两端各留余量
+AFFINE_CHROMA = 0.035                # 通道相对全局增益的扰动幅度，实测最大差 0.070
+AFFINE_PIVOT = 0.55                  # 支点：b = (1-a)*pivot，令中间调不动
+AFFINE_B_JITTER = 4.0 / 255.0        # 支点关系之外的残差
 JPEG_RANGE = (70, 98)         # v1 钉死 95（字节级确认真实 LQ 是 IJG q95）。
                               # 仍以 95 为常见值，但让模型见过别的质量，别把 q95 的
                               # 块效应当成唯一先验
@@ -245,8 +256,12 @@ class CSIGBatchTransform:
 
         # 2) 逐通道仿射 + clip（clip 到 0 产生黑位压死，实测真实数据有 4.5-7.8% 像素死在 0）
         do = (torch.rand(b, device=device) < P_AFFINE).float().view(b, 1, 1, 1)
-        ca = torch.empty(b, 3, 1, 1, device=device).uniform_(*AFFINE_A)
-        cb = torch.empty(b, 3, 1, 1, device=device).uniform_(*AFFINE_B)
+        # 全局增益 + 通道间小扰动（实测三通道增益最大只差 0.07，不是独立采样）
+        g = torch.empty(b, 1, 1, 1, device=device).uniform_(*AFFINE_A)
+        ca = g + torch.empty(b, 3, 1, 1, device=device).uniform_(-AFFINE_CHROMA, AFFINE_CHROMA)
+        # 偏置由增益推出，令中间调不动；再加少量残差
+        cb = (1 - ca) * AFFINE_PIVOT + torch.empty(
+            b, 3, 1, 1, device=device).uniform_(-AFFINE_B_JITTER, AFFINE_B_JITTER)
         out = (out * (1 - do + do * ca) + do * cb).clamp(0, 1)
 
         # 3) JPEG q95（DiffJPEG 与 libjpeg 的 4:2:0 一致，两者 q95 差 2 dB，远小于模糊项）
