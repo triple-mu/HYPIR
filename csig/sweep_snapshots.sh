@@ -1,10 +1,11 @@
 #!/bin/bash
 # 扫训练快照：对每个采样点的 raw 与 EMA 各跑一遍 eval_bench，分摊到多张卡。
 #
-#   GPUS=5,6,7 STRIDE=1000 LIMIT=300 bash csig/sweep_snapshots.sh $CSIG/out/taesd_main
+#   GPUS=5,6,7 STRIDE=1000 LIMIT=300 KIND=both bash csig/sweep_snapshots.sh $CSIG/out/taesd_main
 #
-# raw 与 EMA 都要评：历史上出现过 raw 反超 EMA 之后又掉回去的振荡，
-# 只看其中一个会把振荡误判成收敛。
+# KIND=both|ema|raw。默认 both —— 历史上出现过 raw 反超 EMA 之后又掉回去的振荡，
+# 只看其中一个会把振荡误判成收敛。先用 KIND=ema 粗扫定位峰值、再对峰值附近补 raw，
+# 能省一半机时。
 HERE=$(cd "$(dirname "$0")" && pwd)
 source "$HERE/env.sh"
 cd "$HERE/.." || exit 1
@@ -14,6 +15,9 @@ GPUS=${GPUS:-5,6,7}
 STRIDE=${STRIDE:-1000}
 LIMIT=${LIMIT:-300}
 VAE=${VAE:-taesd}
+KIND=${KIND:-both}
+case "$KIND" in both) KINDS="raw ema";; ema) KINDS="ema";; raw) KINDS="raw";;
+    *) echo "KIND 只能是 both|ema|raw"; exit 1;; esac
 NAME=$(basename "$OUT")
 
 IFS=',' read -ra GPU_ARR <<< "$GPUS"
@@ -24,7 +28,7 @@ i=0
 for d in $(ls -d "$OUT"/snapshots/step-* 2>/dev/null | sort); do
     step=$(basename "$d" | sed 's/step-//')
     [ $((10#$step % STRIDE)) -eq 0 ] || continue
-    for kind in raw ema; do
+    for kind in $KINDS; do
         [ "$kind" = raw ] && w="$d/state_dict.pth" || w="$d/ema_state_dict.pth"
         [ -f "$w" ] || continue
         tag="${NAME}_$((10#$step))_${kind}"
