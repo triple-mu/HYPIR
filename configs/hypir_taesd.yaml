@@ -12,7 +12,8 @@ data_config:
   train:
     # 8 而不是官方的 6：queue_size 必须能被每卡 batch_size 整除，否则
     # batch_transform.py:117 在第一个 batch 就抛 ValueError（官方默认的 6 正好不整除）。
-    # 4 卡 x 8 = 有效 batch 32，lr 保持官方的 1e-5 不动。
+    # 只能取 256 的约数，即 8 / 16 / 32；实测 batch 8 峰值 60 GB/卡，16 会顶到约 110 GB。
+    # 有效 batch = 8 x 卡数。lr 保持官方的 1e-5 不动，不做任何缩放。
     batch_size: 8
     # 官方给 2，那是配 CPU 解 4K 大图的场景。这里样本已经是切好的 512 PNG，
     # 解码很便宜，加 worker 只是别让 dataloader 变成瓶颈。
