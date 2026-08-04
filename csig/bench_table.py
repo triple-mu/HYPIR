@@ -14,7 +14,7 @@ import os
 import re
 
 CSIG = os.environ.get("CSIG", "/root/.cache/huggingface/csig")
-COLS = ["psnr", "ssim", "lpips", "niqe", "musiq", "maniqa", "clipiqa"]
+COLS = ["psnr", "ssim", "lpips", "topiq_fr", "niqe", "musiq", "maniqa", "clipiqa"]
 
 
 def step_of(tag):
@@ -41,15 +41,17 @@ def main():
     if a.sort == "step":
         rows.sort(key=lambda d: (step_of(d["tag"]), d["tag"]))
     else:
-        rows.sort(key=lambda d: d["summary"][a.sort], reverse=a.sort not in ("lpips", "niqe"))
+        rows.sort(key=lambda d: d["summary"].get(a.sort, 0), reverse=a.sort not in ("lpips", "niqe"))
 
     w = max(len(d["tag"]) for d in rows) + 2
     print("%-*s %5s %5s | %s" % (w, "tag", "n", "vae",
                                  "  ".join("%8s" % (c + ("↓" if c in ("lpips", "niqe") else "")) for c in COLS)))
     print("-" * (w + 14 + 10 * len(COLS)))
     for d in rows:
-        print("%-*s %5d %5s | %s" % (w, d["tag"], d["n"], d["vae"],
-                                     "  ".join("%8.4f" % d["summary"][c] for c in COLS)))
+        # 老结果没有 topiq_fr 这一列，留空而不是崩
+        cells = "  ".join("%8.4f" % d["summary"][c] if c in d["summary"] else "%8s" % "-"
+                          for c in COLS)
+        print("%-*s %5d %5s | %s" % (w, d["tag"], d["n"], d["vae"], cells))
 
 
 if __name__ == "__main__":

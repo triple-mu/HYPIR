@@ -35,8 +35,11 @@ CSIG = os.environ.get("CSIG", "/root/.cache/huggingface/csig")
 BENCH = os.path.join(CSIG, "data/bench/StableSR_testsets/DIV2K_V2_val")
 LORA_MODULES = ["to_k", "to_q", "to_v", "to_out.0", "conv", "conv1", "conv2",
                 "conv_shortcut", "conv_out", "proj_in", "proj_out", "ff.net.2", "ff.net.0.proj"]
-# 有参考的三个 + 无参考的四个。论文 Table 1 报的就是这一套（DeQA 没进 pyiqa，略过）。
-FR_METRICS = ["psnr", "ssim", "lpips"]
+# 论文 Table 1 那一套（DeQA 没进 pyiqa，略过），外加 topiq_fr。
+# topiq_fr 不在论文表里，加它是因为 docs/FINDINGS-赛题逆向.md 反解出赛题的实际公式是
+# 感知分 ≈ 13.674·TOPIQ-FR + 4.477·MANIQA − 5.731 —— CLIP-IQA 权重为零、不在公式里。
+# 两套口径同时报，免得优化了一个不进分的指标。
+FR_METRICS = ["psnr", "ssim", "lpips", "topiq_fr"]
 NR_METRICS = ["niqe", "musiq", "maniqa", "clipiqa"]
 
 
