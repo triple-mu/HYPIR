@@ -131,6 +131,14 @@ class BaseTrainer:
         ...
 
     def init_vae(self):
+        if self.config.get("vae", "sd") == "taesd":
+            # [csig-taesd] 冻结的 TAESD 编解码。只有它换了，其余训练配方全部对齐官方 up/main。
+            from HYPIR.utils.taesd import build_taesd, TAESD_A, TAESD_B
+            self.vae = build_taesd(
+                self.weight_dtype, self.device, compile_parts=self.config.get("compile", False))
+            logger.info("VAE = TAESD (frozen), latent 换算 A=%.5f B=%.5f" % (TAESD_A, TAESD_B))
+            return
+
         self.vae = AutoencoderKL.from_pretrained(
             self.config.base_model_path, subfolder="vae", torch_dtype=self.weight_dtype).to(self.device)
         self.vae.eval().requires_grad_(False)
@@ -469,6 +477,9 @@ class BaseTrainer:
                         self.log_grads()
                     if self.global_step % self.config.checkpointing_steps == 0 or self.global_step == 1:
                         self.save_checkpoint()
+                    _snap = self.config.get("snapshot_steps", 0)
+                    if _snap and (self.global_step % _snap == 0 or self.global_step == 1):
+                        self.save_snapshot()
 
                 if self.global_step >= self.config.max_train_steps:
                     break
@@ -537,6 +548,24 @@ class BaseTrainer:
                 grad_dict[f"grad_norm/{k}_{name}"] = torch.norm(torch.cat(v)).item()
             self.G_opt.zero_grad()
         self.accelerator.log(grad_dict, step=self.global_step)
+
+    def save_snapshot(self):
+        """只 dump 两份 LoRA 权重（raw + EMA），2.2 GB/份。
+
+        完整的 save_state 是 8.5 GB（判别器的冻结骨干就占 3.4 GB），只适合当续训断点；
+        要扫收敛曲线得靠这个，才能把存档频率提到 250 步而不撑爆磁盘、不拖慢训练。
+        """
+        if not self.accelerator.is_main_process:
+            return
+        save_dir = os.path.join(self.config.output_dir, "snapshots", f"step-{self.global_step:06d}")
+        os.makedirs(save_dir, exist_ok=True)
+        model = self.unwrap_model(self.G)
+        state_dict = {
+            name: param.detach().clone().data
+            for name, param in model.named_parameters() if param.requires_grad
+        }
+        torch.save(state_dict, os.path.join(save_dir, "state_dict.pth"))
+        self.ema_handler.save_ema_weights(save_dir)
 
     def save_checkpoint(self):
         if self.accelerator.is_main_process:

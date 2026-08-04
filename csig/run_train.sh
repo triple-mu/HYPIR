@@ -1,13 +1,16 @@
 #!/bin/bash
 # 训练看门狗：机器是共享的，docker 重启/外部 kill 都会打断长跑任务。
 # 被杀后自动从最近 checkpoint 续训。
-#   GPUS=0,1,4,5 CFG=configs/csig_train.yaml bash csig/run_train.sh
+#   GPUS=4,5,6,7 CFG=configs/hypir_taesd.yaml bash csig/run_train.sh
 HERE=$(cd "$(dirname "$0")" && pwd)
 source "$HERE/env.sh"
 csig_check_versions || exit 1     # 版本不对就别浪费机时，见 env.sh
 cd "$HERE/.." || exit 1
-CFG=${CFG:-configs/csig_train.yaml}
+CFG=${CFG:-configs/hypir_taesd.yaml}
 NGPU=${NGPU:-4}
+# 恢复官方行为：D 步在 no_grad 下重跑 forward_generator，而不是复用上一 G 步的缓存。
+# 复用能省 25% 步时，但假样本会晚一拍，属于与官方的算法偏离。
+export CSIG_DSTEP_RECOMPUTE=1
 
 # 选卡：机器是共享的，必须避开别人。判据比"当前显存<2GB"更严——
 # 连续采样 3 次（间隔 2 s），三次都空闲才算，避开正在启动的任务。
@@ -66,7 +69,7 @@ for i in $(seq 1 200); do
     echo "[watchdog] $(date '+%F %T') 第 $i 次启动 resume=${LAST:-无} GPU=$GPUS" >> "$WD"
     T0=$SECONDS
     env CUDA_VISIBLE_DEVICES="$GPUS" accelerate launch --num_processes "$N" \
-        --mixed_precision fp16 train.py --config "$RUN" >> "$LOG" 2>&1
+        --mixed_precision bf16 train.py --config "$RUN" >> "$LOG" 2>&1
     RC=$?
     ELAPSED=$((SECONDS - T0))
     echo "[watchdog] $(date '+%F %T') 退出码 $RC，本次跑了 ${ELAPSED}s (最近 ckpt: ${LAST:-无})" >> "$WD"
