@@ -17,15 +17,21 @@ class MultiLevelLoss(nn.Module):
     在 fp32 下算；跟着 each 变 fp16 会让损失差 2e-3，是真实的精度变化而非噪声。
     """
 
-    def __init__(self, alpha=1.0):
+    def __init__(self, alpha=1.0, g_target=None):
         super().__init__()
         self.lossfn = nn.BCEWithLogitsLoss(reduction="none")
         self.alpha = alpha
+        # 上游（和官方）让 G 的目标也取 alpha，于是 G 的对抗梯度 dL/dl = σ(l) − alpha
+        # 在 l = logit(alpha) 处过零反号 —— G 一旦被 D 判得「够真」，对抗项会主动把它
+        # 推回去变差。标准的 one-sided label smoothing（Salimans 2016）只平滑 D 的真
+        # 样本，G 的目标保持 1.0。g_target=None 时保持上游行为。
+        self.g_target = alpha if g_target is None else g_target
 
     def forward(self, input, for_real=True, for_G=False):
         if for_G:
-            for_real = True
-        value = self.alpha if for_real else 0.0
+            value = self.g_target
+        else:
+            value = self.alpha if for_real else 0.0
         loss = 0
         for each in input:
             loss_ = self.lossfn(each, torch.full_like(each, value, dtype=torch.float32))
@@ -83,12 +89,12 @@ class MultiLevelDConv(nn.Module):
 
 class ImageConvNextDiscriminator(nn.Module):
 
-    def __init__(self, precision="fp32"):
+    def __init__(self, precision="fp32", g_target=None):
         super().__init__()
         self.model = ImageOpenCLIPConvNext(precision=precision)
         self.model.eval().requires_grad_(False)
         self.decoder = MultiLevelDConv(level=4, in_ch1=[384, 768, 1536], in_ch2=1024, out_ch=512, down=2)
-        self.loss_fn = MultiLevelLoss(alpha=0.8)   # [csig-speedup] 见上面的类注释
+        self.loss_fn = MultiLevelLoss(alpha=0.8, g_target=g_target)   # [csig-speedup] 见上面的类注释
         self.register_buffer("image_mean", torch.tensor([0.48145466, 0.4578275, 0.40821073], dtype=torch.float32))
         self.register_buffer("image_std", torch.tensor([0.26862954, 0.26130258, 0.27577711], dtype=torch.float32))
 

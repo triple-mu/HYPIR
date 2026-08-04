@@ -175,7 +175,9 @@ class BaseTrainer:
             # [csig-speedup] D 权重留 fp32，计算靠 autocast 走半精度。
             # 不要用 precision="fp16" 转权重：D 内部的 image_mean/std 是 fp32 buffer，
             # 归一化后再撞半精度卷积权重会类型错误。autocast 会自动处理所有转换。
-            self.D = ImageConvNextDiscriminator(precision="fp32").to(device=self.device)
+            # d_g_target=1.0 关掉 G 侧的 label smoothing（官方/上游是跟随 alpha=0.8）
+            self.D = ImageConvNextDiscriminator(
+                precision="fp32", g_target=self.config.get("d_g_target", None)).to(device=self.device)
         self.D.train().requires_grad_(True)
         # [csig-speedup] 从已发布的 HYPIR_sd2_D.safetensors 续训，省掉判别器从零预热。
         # 该文件只含可训练部分（38 张量/13.01M）且少一层 decoder. 前缀
