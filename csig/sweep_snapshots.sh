@@ -3,6 +3,10 @@
 #
 #   GPUS=5,6,7 STRIDE=1000 LIMIT=300 KIND=both bash csig/sweep_snapshots.sh $CSIG/out/taesd_main
 #
+# MAX_STEP 限定上界，配合「已评过就跳过」可以两趟扫出疏密不同的曲线：
+#   STRIDE=250 MAX_STEP=3000 ...   # 峰值区间密扫
+#   STRIDE=1000 ...                # 远端粗扫，前一趟覆盖过的自动跳过
+#
 # KIND=both|ema|raw。默认 both —— 历史上出现过 raw 反超 EMA 之后又掉回去的振荡，
 # 只看其中一个会把振荡误判成收敛。先用 KIND=ema 粗扫定位峰值、再对峰值附近补 raw，
 # 能省一半机时。
@@ -13,6 +17,7 @@ cd "$HERE/.." || exit 1
 OUT=${1:?用法: bash csig/sweep_snapshots.sh <训练输出目录>}
 GPUS=${GPUS:-5,6,7}
 STRIDE=${STRIDE:-1000}
+MAX_STEP=${MAX_STEP:-0}          # 0 = 不限
 LIMIT=${LIMIT:-300}
 VAE=${VAE:-taesd}
 KIND=${KIND:-both}
@@ -28,6 +33,7 @@ i=0
 for d in $(ls -d "$OUT"/snapshots/step-* 2>/dev/null | sort); do
     step=$(basename "$d" | sed 's/step-//')
     [ $((10#$step % STRIDE)) -eq 0 ] || continue
+    [ "$MAX_STEP" -gt 0 ] && [ $((10#$step)) -gt "$MAX_STEP" ] && continue
     for kind in $KINDS; do
         [ "$kind" = raw ] && w="$d/state_dict.pth" || w="$d/ema_state_dict.pth"
         [ -f "$w" ] || continue
