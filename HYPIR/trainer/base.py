@@ -371,13 +371,14 @@ class BaseTrainer:
             self.unwrap_model(self.D).eval().requires_grad_(False)
             x = self.forward_generator()
             self.G_pred = x
-            # [csig-speedup] 供下一步 D 复用
             loss_l2 = F.mse_loss(x, self.batch_inputs.gt, reduction="mean") * self.config.lambda_l2
-            # [csig-speedup] accelerate 的 autocast 只包被 prepare 过的 G，
-            # LPIPS/D 是裸调用，显式包一层让它们的卷积也走半精度
-            with self.accelerator.autocast():
-                loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
-                loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
+            # LPIPS 留在 fp32，与官方一致：官方没有对它包 autocast，模块是 fp32、
+            # x 与 gt 也是 fp32（forward_generator 末尾 .float()），所以走的是 fp32。
+            # 曾经为提速把它包进 autocast，但 lambda_lpips=5 是最大的一项重建损失，
+            # 不值得为此偏离官方数值。
+            loss_lpips = self.net_lpips(x, self.batch_inputs.gt).mean() * self.config.lambda_lpips
+            # D 被 accelerator.prepare 包过，forward 本身就在 autocast 下（官方同理）。
+            loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
             loss_G = loss_l2 + loss_lpips + loss_disc
             self.accelerator.backward(loss_G)
             if self.accelerator.sync_gradients:
@@ -406,7 +407,7 @@ class BaseTrainer:
         self.G_pred = x
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)
-            # [csig-speedup] 同上，显式包 autocast
+            # D 被 prepare 包过，forward 自带 autocast，这层是冗余的但无害（嵌套 autocast 是空操作）
             with self.accelerator.autocast():
                 loss_D_real, real_logits = self.D(gt, for_real=True, return_logits=True)
                 loss_D_fake, fake_logits = self.D(x, for_real=False, return_logits=True)
