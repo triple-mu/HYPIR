@@ -6,8 +6,10 @@
 out_size x out_size，喂原图直接崩。
 
 源用 HF 的 danjacobellis/LSDIR（未 gated，195 个 parquet，84,991 张 train，97.8 GB）。
-切法是非重叠 512（step 512，残边丢弃，任一边不足 512 的图跳过），不做任何内容筛选 ——
-官方没有筛，我们也不筛。
+切法是**均匀铺满**：每个方向取 ceil(边长/512) 个等距起点，正好盖住整张图。
+不用 step=512 硬切残边丢弃 —— LSDIR 中位尺寸约 1224x816，硬切每张只出 2 个 patch
+且扔掉约 40% 的像素；铺满能出 6 个且零丢弃，代价是相邻 patch 有 30~40% 重叠。
+任一边不足 512 的图跳过。不做任何内容筛选 —— 官方没有筛，我们也不筛。
 
     python csig/prep_lsdir.py <lsdir_raw目录> <patch输出目录> <parquet输出路径>
 """
@@ -27,6 +29,14 @@ S = 512
 WORKERS = int(os.environ.get("WORKERS", "48"))
 
 
+def starts(size):
+    """一维上的等距起点，正好盖住 [0, size)。"""
+    n = max(1, -(-size // S))          # ceil(size / S)
+    if n == 1:
+        return [0]
+    return [round(i * (size - S) / (n - 1)) for i in range(n)]
+
+
 def do_shard(src, out_root):
     kept = []
     pf = pq.ParquetFile(src)
@@ -44,8 +54,8 @@ def do_shard(src, out_root):
             # 分桶存：一个目录塞 30 万个文件虽然能用，但任何 ls / glob 都会变得很难受
             sub = os.path.join(out_root, stem[:4])
             os.makedirs(sub, exist_ok=True)
-            for j, top in enumerate(range(0, h - S + 1, S)):
-                for i, left in enumerate(range(0, w - S + 1, S)):
+            for j, top in enumerate(starts(h)):
+                for i, left in enumerate(starts(w)):
                     dst = os.path.join(sub, "%s_%d_%d.png" % (stem, j, i))
                     im.crop((left, top, left + S, top + S)).save(dst, "PNG")
                     kept.append(dst)
