@@ -40,7 +40,9 @@ class TAESDWrapper(torch.nn.Module):
         self.config = SimpleNamespace(scaling_factor=0.18215, latent_channels=4)
 
     def encode(self, x):
-        return _TAESDLatent((self.tae.encode(x).latents - TAESD_B) / TAESD_A)
+        # 调用方写的是 encode(x).latent_dist.sample()，两层都得有
+        z = (self.tae.encode(x).latents - TAESD_B) / TAESD_A
+        return SimpleNamespace(latent_dist=_TAESDLatent(z))
 
     def decode(self, z):
         return self.tae.decode(z * TAESD_A + TAESD_B)
