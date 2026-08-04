@@ -52,7 +52,12 @@ def main():
     ap.add_argument("--tag", required=True)
     ap.add_argument("--bench-dir", default=BENCH)
     ap.add_argument("--limit", type=int, default=0, help="只取前 N 对，扫曲线时用 300")
-    ap.add_argument("--batch", type=int, default=8)
+    # 评估集 GT 是 512x512，enhance() 里 `min(h0,w0) <= patch_size` 取等号也成立，
+    # 所以 patch_size>512 会把 512 上采样到 patch_size 再跑、最后缩回来 ——
+    # 等于「把 UNet 的内部工作分辨率抬高」，是个零改造成本的探针。
+    # 而 patch_size=512 时只切出 1 个 tile，此时 stride 完全不起作用。
+    ap.add_argument("--patch-size", type=int, default=512)
+    ap.add_argument("--stride", type=int, default=256)
     a = ap.parse_args()
 
     names = sorted(os.listdir(os.path.join(a.bench_dir, "gt")))
@@ -78,8 +83,8 @@ def main():
         gt = load(os.path.join(a.bench_dir, "gt", name))
         lq = load(os.path.join(a.bench_dir, "lq", name))
         with torch.no_grad():
-            out = en.enhance(lq, prompt=PROMPT, upscale=4, patch_size=512, stride=256,
-                             return_type="pt").cuda().clamp(0, 1)
+            out = en.enhance(lq, prompt=PROMPT, upscale=4, patch_size=a.patch_size,
+                             stride=a.stride, return_type="pt").cuda().clamp(0, 1)
         item = {"name": name}
         for k in FR_METRICS:
             v = float(metrics[k](out, gt))
@@ -100,7 +105,8 @@ def main():
     out_path = os.path.join(CSIG, "out", "bench_%s.json" % a.tag)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     json.dump({"tag": a.tag, "vae": a.vae, "weight": a.weight, "n": len(names),
-               "prompt": PROMPT, "summary": summary, "per_item": per_item},
+               "prompt": PROMPT, "patch_size": a.patch_size, "stride": a.stride,
+               "summary": summary, "per_item": per_item},
               open(out_path, "w"))
     print("写到 %s" % out_path)
 
