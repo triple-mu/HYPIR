@@ -62,6 +62,9 @@ def main():
     ap.add_argument("--patch-size", type=int, default=512)
     ap.add_argument("--stride", type=int, default=256)
     ap.add_argument("--wavelet-levels", type=int, default=5)
+    # 给 LQ 人为加上实测标定的色调仿射（HYPIR/dataset/csig.py 的参数，从赛题三张真实图
+    # 逐通道增益反推）。DIV2K 的 LQ 颜色是保真的，加上它才能在 n=300 上复现真实域的条件。
+    ap.add_argument("--lq-tone-shift", action="store_true")
     a = ap.parse_args()
 
     names = sorted(os.listdir(os.path.join(a.bench_dir, "gt")))
@@ -86,6 +89,13 @@ def main():
     for i, name in enumerate(names):
         gt = load(os.path.join(a.bench_dir, "gt", name))
         lq = load(os.path.join(a.bench_dir, "lq", name))
+        if a.lq_tone_shift:
+            from HYPIR.dataset.csig import AFFINE_A, AFFINE_CHROMA, AFFINE_PIVOT, AFFINE_B_JITTER
+            g = torch.empty(1, 1, 1, 1, device=lq.device).uniform_(*AFFINE_A)
+            ca = g + torch.empty(1, 3, 1, 1, device=lq.device).uniform_(-AFFINE_CHROMA, AFFINE_CHROMA)
+            cb = (1 - ca) * AFFINE_PIVOT + torch.empty(1, 3, 1, 1, device=lq.device).uniform_(
+                -AFFINE_B_JITTER, AFFINE_B_JITTER)
+            lq = (lq * ca + cb).clamp(0, 1)
         with torch.no_grad():
             out = en.enhance(lq, prompt=PROMPT, upscale=4, patch_size=a.patch_size,
                              stride=a.stride, wavelet_levels=a.wavelet_levels,
