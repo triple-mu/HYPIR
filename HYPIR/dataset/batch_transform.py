@@ -48,6 +48,7 @@ class RealESRGANBatchTransform(BatchTransform):
         poisson_scale_range2,
         jpeg_range2,
         resize_back=True,
+        color_affine_prob=0.0,   # [csig-tone] 0 = 保持官方行为，见 __call__ 里的说明
     ):
         super().__init__()
         self.hq_key = hq_key
@@ -84,6 +85,7 @@ class RealESRGANBatchTransform(BatchTransform):
         else:
             self.usm_sharpener = None
         self.queue_size = queue_size
+        self.color_affine_prob = color_affine_prob
         self.jpeger = DiffJPEG(differentiable=False)
 
         self.queue = {}
@@ -275,6 +277,25 @@ class RealESRGANBatchTransform(BatchTransform):
         # resize back to gt_size since We are doing restoration task
         if stage2_scale != 1 and self.resize_back:
             out = F.interpolate(out, size=(ori_h, ori_w), mode="bicubic")
+        # [csig-tone] 逐通道色调仿射。官方配方完全没有这一项，而赛题真实退化里它占
+        # 损失的 0.9~22%（csig/README.md），实测三对验证图的通道增益是
+        # (0.897,0.909,0.921) / (0.955,0.986,0.973) / (1.155,1.085,1.150)。
+        # 模型没在带色偏的输入上训过 -> 学不会修 -> 推理端 wavelet_reconstruction
+        # 又把 LQ 的低频原样搬进输出，于是色偏在结构上无解。实测它值 -5.7% 感知分。
+        # 参数与 HYPIR/dataset/csig.py 同源（从那三对反推标定）。
+        if self.color_affine_prob > 0:
+            from HYPIR.dataset.csig import (AFFINE_A, AFFINE_CHROMA, AFFINE_PIVOT,
+                                            AFFINE_B_JITTER)
+            b_ = out.size(0)
+            do = (torch.rand(b_, device=out.device) < self.color_affine_prob).float().view(b_, 1, 1, 1)
+            # 全局增益 + 通道间小扰动（实测三通道增益最大只差 0.07，不是独立采样）
+            g = torch.empty(b_, 1, 1, 1, device=out.device).uniform_(*AFFINE_A)
+            ca = g + torch.empty(b_, 3, 1, 1, device=out.device).uniform_(-AFFINE_CHROMA, AFFINE_CHROMA)
+            # 偏置由增益推出，令中间调不动；再加少量残差
+            cb = (1 - ca) * AFFINE_PIVOT + torch.empty(
+                b_, 3, 1, 1, device=out.device).uniform_(-AFFINE_B_JITTER, AFFINE_B_JITTER)
+            out = (out * (1 - do + do * ca) + do * cb).clamp(0, 1)
+
         # clamp and round
         lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
 
