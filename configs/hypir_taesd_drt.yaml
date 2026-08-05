@@ -1,0 +1,142 @@
+# TAESD 版 HYPIR：训练配方逐项对齐官方 configs/sd2_train.yaml，
+# 唯一的改动是把冻结的 SD-VAE 换成冻结的 TAESD（vae: taesd），仍然只训 UNet 的 LoRA。
+#
+# 数据是官方 README「Train」一节给的复现配方：LSDIR 切成 512x512 patch，
+# 用 parquet 记 image_path / prompt（见 csig/prep_lsdir.py）。
+# 退化段、增强段、三个 lambda、两个 lr、LoRA 段、EMA 段、mixed_precision、seed
+# 全部原样照抄官方，不要动。赛题特化的那一套（HYPIR/dataset/csig.py + configs/csig_train.yaml）
+# 本配置一概不引用。
+output_dir: /root/.cache/huggingface/csig/out/taesd_drt
+
+data_config:
+  train:
+    # 8 而不是官方的 6：queue_size 必须能被每卡 batch_size 整除，否则
+    # batch_transform.py:117 在第一个 batch 就抛 ValueError（官方默认的 6 正好不整除）。
+    # 只能取 256 的约数，即 8 / 16 / 32；实测 batch 8 峰值 60 GB/卡，16 会顶到约 110 GB。
+    # 有效 batch = 8 x 卡数。lr 保持官方的 1e-5 不动，不做任何缩放。
+    batch_size: 8
+    # 官方给 2，那是配 CPU 解 4K 大图的场景。这里样本已经是切好的 512 PNG，
+    # 解码很便宜，加 worker 只是别让 dataloader 变成瓶颈。
+    dataloader_num_workers: 16
+    dataset:
+      target: HYPIR.dataset.realesrgan.RealESRGANDataset
+      params:
+        file_meta:
+          file_list: /root/.cache/huggingface/csig/data/lsdir_512_nulltxt.parquet
+          image_path_prefix: ""
+          image_path_key: image_path
+          prompt_key: prompt
+        file_backend_cfg:
+          target: HYPIR.dataset.file_backend.HardDiskBackend
+        out_size: 512
+        crop_type: none
+        use_hflip: true
+        use_rot: false
+
+        blur_kernel_size: 21
+        kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+        kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+        sinc_prob: 0.1
+        blur_sigma: [0.2, 3]
+        betag_range: [0.5, 4]
+        betap_range: [1, 2]
+
+        blur_kernel_size2: 21
+        kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
+        kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
+        sinc_prob2: 0.1
+        blur_sigma2: [0.2, 1.5]
+        betag_range2: [0.5, 4]
+        betap_range2: [1, 2]
+
+        final_sinc_prob: 0.8
+
+        p_empty_prompt: 0.0
+
+    batch_transform:
+      target: HYPIR.dataset.batch_transform.RealESRGANBatchTransform
+      params:
+        hq_key: hq
+        extra_keys: [txt]
+        use_sharpener: true
+        # Queue size of training pool, this should be multiples of batch_size (per GPU).
+        queue_size: 256
+        # the first degradation process
+        resize_prob: [0.2, 0.7, 0.1] # up, down, keep
+        resize_range: [0.15, 1.5]
+        gaussian_noise_prob: 0.5
+        noise_range: [1, 30]
+        poisson_scale_range: [0.05, 3]
+        gray_noise_prob: 0.4
+        jpeg_range: [30, 95]
+
+        # the second degradation process
+        stage2_scale: 4
+        second_blur_prob: 0.8
+        resize_prob2: [0.3, 0.4, 0.3] # up, down, keep
+        resize_range2: [0.3, 1.2]
+        gaussian_noise_prob2: 0.5
+        noise_range2: [1, 25]
+        poisson_scale_range2: [0.05, 2.5]
+        gray_noise_prob2: 0.4
+        jpeg_range2: [30, 95]
+
+        resize_back: true
+
+base_model_type: sd2
+base_model_path: /root/.cache/huggingface/csig/weights
+# 从官方发布的权重续训：G 是 514 个 lora key，D 是 38 个 decoder 张量（加 decoder. 前缀后全匹配）。
+# 官方权重是 64xA6000 / batch 384~1536 / 20k 步训出来的，4 卡从零复现不了这个规模。
+init_generator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2.pth
+init_discriminator_weight: /root/.cache/huggingface/csig/weights/HYPIR_sd2_D.safetensors
+# 本配置与官方的唯一实质差异
+vae: taesd
+
+model_t: 200
+coeff_t: 200
+lora_rank: 256
+lora_modules: [to_k, to_q, to_v, to_out.0, conv, conv1, conv2, conv_shortcut, conv_out, proj_in, proj_out, ff.net.2, ff.net.0.proj]
+use_ema: true
+ema_decay: 0.999
+resume_ema: true
+
+lambda_gan: 0.5
+lambda_lpips: 5
+lambda_l2: 1
+lr_G: 1e-5
+lr_D: 1e-5
+optimizer_type: adam
+opt_kwargs:
+  betas: [0.9, 0.999]
+  fused: true
+
+mixed_precision: bf16
+seed: 231
+# 官方 config 写 30000，论文实际是 10k + 10k（第二段降 lr 到 5e-6 并把 batch 加到 1536），
+# 并说 512x512 复原任务约 10k 步收敛。这里用常数 lr 跑 20000 步，留出观察余量。
+max_train_steps: 20000
+gradient_accumulation_steps: 1
+# [csig-speedup] 关掉是 torch.compile 生效的前提，纯性能项，不影响数值
+gradient_checkpointing: false
+max_grad_norm: 1.0
+logging_dir: logs
+report_to: tensorboard
+# 完整 save_state 一份 8.5 GB（判别器的冻结骨干就占 3.4 GB），只用于断点续训
+checkpointing_steps: 500
+checkpoints_total_limit: 8
+# 轻量快照：只存 raw + EMA 两份 LoRA 权重，2.2 GB 一份，用来扫收敛曲线
+snapshot_steps: 250
+resume_from_checkpoint: ~
+log_image_steps: 200
+log_grad_steps: 200
+log_grad_modules: [conv_out]
+
+# [csig-compile] 模型侧 1005.7 -> 630.1 ms (1.60x)。首次编译约 200 s，热缓存重启 66 s。
+# 编译点：G（prepare 之后）/ VAE 的 encoder+decoder / net_lpips / D.model.encode_image
+compile: true
+
+# [csig-drt] 判别器的真样本也过一遍 TAESD 往返 —— 本轮唯一成功的改动。
+# 全量 3000 对感知分 2.5027 vs 官方 2.2884，综合分比官方高 26.5%。
+# 机制见 docs/FINDINGS-TAESD训练.md §5b。注意这一项必须显式写在 config 里：
+# HYPIR/trainer/base.py 用 config.get("d_real_roundtrip", False)，缺键就是旧行为。
+d_real_roundtrip: true
