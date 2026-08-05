@@ -407,11 +407,21 @@ class BaseTrainer:
             with torch.no_grad():
                 x = self.forward_generator()
         self.G_pred = x
+        # [csig-drt] G 的输出永远经过 TAESD 解码器、像素 GT 不经过，于是真假样本之间存在一个
+        # 内容无关、G 原理上改不掉的分离方向（解码器指纹）。开这个开关后真样本也过一遍往返，
+        # 对抗目标从「像真图」变成「像 TAESD 能表达的真图」。只改 D 的训练目标，
+        # 不动 G 的参数结构，也不动 L2/LPIPS 的目标（那两项要的是逐点的真值，
+        # 用像素 GT 才能逼 G 在 latent 里预补偿解码损失）。
+        d_real = gt
+        if self.config.get("d_real_roundtrip", False):
+            with torch.no_grad():
+                _z = self.vae.encode(gt.to(self.weight_dtype)).latent_dist.sample()
+                d_real = self.vae.decode(_z).sample.float()
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)
             # D 被 prepare 包过，forward 自带 autocast，这层是冗余的但无害（嵌套 autocast 是空操作）
             with self.accelerator.autocast():
-                loss_D_real, real_logits = self.D(gt, for_real=True, return_logits=True)
+                loss_D_real, real_logits = self.D(d_real, for_real=True, return_logits=True)
                 loss_D_fake, fake_logits = self.D(x, for_real=False, return_logits=True)
             loss_D = loss_D_real.mean() + loss_D_fake.mean()
             self.accelerator.backward(loss_D)
