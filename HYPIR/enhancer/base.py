@@ -74,6 +74,11 @@ class BaseEnhancer:
         patch_size: int = 512,
         stride: int = 256,
         return_type: Literal["pt", "np", "pil"] = "pt",
+        # wavelet_reconstruction 用 LQ 的低频替换输出低频，levels 决定替换多宽的频带
+        # （等效 sigma = sqrt(0.5*sum(4^i))：levels=5 约 13.1 px、levels=3 约 3.2 px）。
+        # 真实退化带色调仿射，而它整个落在被替换掉的频带里 —— levels 越大越修不掉。
+        # 赛题验证集 3 对上实测保留增益：l=1 13.9% / l=2 20.7% / l=3 21.2% / l=4 19.6% / l=5 19.0%。
+        wavelet_levels: int = 5,
     ) -> torch.Tensor | np.ndarray | List[Image.Image]:
         if stride <= 0:
             raise ValueError("Stride must be greater than 0.")
@@ -150,7 +155,7 @@ class BaseEnhancer:
         x = x[..., :h1, :w1]
         x = (x + 1) / 2
         x = F.interpolate(input=x, size=(h0, w0), mode="bicubic", antialias=True)
-        x = wavelet_reconstruction(x, ref.to(device=self.device))
+        x = wavelet_reconstruction(x, ref.to(device=self.device), levels=wavelet_levels)
 
         if return_type == "pt":
             return x.clamp(0, 1).cpu()

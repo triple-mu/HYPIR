@@ -66,15 +66,15 @@ def wavelet_decomposition(image: Tensor, levels=5):
     return high_freq, low_freq
 
 
-def wavelet_reconstruction(content_feat:Tensor, style_feat:Tensor):
+def wavelet_reconstruction(content_feat:Tensor, style_feat:Tensor, levels: int = 5):
     """
     Apply wavelet decomposition, so that the content will have the same color as the style.
     """
     # calculate the wavelet decomposition of the content feature
-    content_high_freq, content_low_freq = wavelet_decomposition(content_feat)
+    content_high_freq, content_low_freq = wavelet_decomposition(content_feat, levels)
     del content_low_freq
     # calculate the wavelet decomposition of the style feature
-    style_high_freq, style_low_freq = wavelet_decomposition(style_feat)
+    style_high_freq, style_low_freq = wavelet_decomposition(style_feat, levels)
     del style_high_freq
     # reconstruct the content feature with the style's high frequency
     return content_high_freq + style_low_freq

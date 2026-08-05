@@ -61,6 +61,7 @@ def main():
     # 而 patch_size=512 时只切出 1 个 tile，此时 stride 完全不起作用。
     ap.add_argument("--patch-size", type=int, default=512)
     ap.add_argument("--stride", type=int, default=256)
+    ap.add_argument("--wavelet-levels", type=int, default=5)
     a = ap.parse_args()
 
     names = sorted(os.listdir(os.path.join(a.bench_dir, "gt")))
@@ -87,7 +88,8 @@ def main():
         lq = load(os.path.join(a.bench_dir, "lq", name))
         with torch.no_grad():
             out = en.enhance(lq, prompt=PROMPT, upscale=4, patch_size=a.patch_size,
-                             stride=a.stride, return_type="pt").cuda().clamp(0, 1)
+                             stride=a.stride, wavelet_levels=a.wavelet_levels,
+                             return_type="pt").cuda().clamp(0, 1)
         item = {"name": name}
         for k in FR_METRICS:
             v = float(metrics[k](out, gt))
@@ -109,6 +111,7 @@ def main():
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     json.dump({"tag": a.tag, "vae": a.vae, "weight": a.weight, "n": len(names),
                "prompt": PROMPT, "patch_size": a.patch_size, "stride": a.stride,
+               "wavelet_levels": a.wavelet_levels,
                "summary": summary, "per_item": per_item},
               open(out_path, "w"))
     print("写到 %s" % out_path)
