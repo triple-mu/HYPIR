@@ -133,6 +133,7 @@ class BaseTrainer:
     def init_vae(self):
         # [csig-taesd-enc] 编码器可训时收集它的参数；其余情况恒为空列表，下游按空处理。
         self.tae_params = []
+        self.vae_drt = None     # 非 None 时 d_real_roundtrip 走这份冻结副本
         if self.config.get("vae", "sd") == "taesd":
             # [csig-taesd] 冻结的 TAESD 编解码。只有它换了，其余训练配方全部对齐官方 up/main。
             from HYPIR.utils.taesd import build_taesd, TAESD_A, TAESD_B
@@ -142,6 +143,15 @@ class BaseTrainer:
                 train_encoder=train_enc)
             if train_enc:
                 self.tae_params = [p for p in self.vae.tae.encoder.parameters() if p.requires_grad]
+                # [csig-taesd-enc] d_real_roundtrip 用的是同一个编码器，一旦它可训，D 的「真」
+                # 目标就会随训练漂移 —— D 在追一个移动的靶，而 drt 是目前唯一确认成功的改动，
+                # 两者混在一起结果无法归因。开这个键则给 drt 单留一份冻结副本切断耦合。
+                # 注意 decoder 两边都是冻结的，「消掉解码器指纹」这个 drt 的核心机制不受影响。
+                if self.config.get("drt_frozen_encoder", False):
+                    self.vae_drt = build_taesd(
+                        self.weight_dtype, self.device,
+                        compile_parts=self.config.get("compile", False))
+                    logger.info("d_real_roundtrip 使用冻结的编码器副本（与可训编码器解耦）")
             logger.info("VAE = TAESD (%s), latent 换算 A=%.5f B=%.5f, 可训 %.3f M" % (
                 "encoder 可训" if train_enc else "frozen", TAESD_A, TAESD_B,
                 sum(p.numel() for p in self.tae_params) / 1e6))
@@ -472,9 +482,10 @@ class BaseTrainer:
         if self.config.get("d_real_roundtrip", False):
             # autocast 的理由同 prepare_batch_inputs：编码器可训时参数是 fp32，输入是 bf16。
             # 编码器冻结时权重本就是 bf16，autocast 对这段是空操作，数值不变。
+            _vae = self.vae_drt or self.vae
             with torch.no_grad(), self.accelerator.autocast():
-                _z = self.vae.encode(gt.to(self.weight_dtype)).latent_dist.sample()
-                d_real = self.vae.decode(_z).sample.float()
+                _z = _vae.encode(gt.to(self.weight_dtype)).latent_dist.sample()
+                d_real = _vae.decode(_z).sample.float()
         with self.accelerator.accumulate(self.D):
             self.unwrap_model(self.D).train().requires_grad_(True)
             # D 被 prepare 包过，forward 自带 autocast，这层是冗余的但无害（嵌套 autocast 是空操作）
