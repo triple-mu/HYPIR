@@ -352,7 +352,8 @@ def fold_upsample_conv(conv: nn.Conv2d, channels_last: bool) -> tuple[torch.Tens
     v = v.transpose(0, 1).contiguous()  # ConvTranspose 权重布局是 (in, out, kH, kW)
     if channels_last:
         v = v.contiguous(memory_format=torch.channels_last)
-    return v, conv.bias.detach()
+    # TAESD 上采样后的卷积是 bias=False，这里要容忍 None
+    return v, (conv.bias.detach() if conv.bias is not None else None)
 
 
 class Upsample2D(nn.Module):
