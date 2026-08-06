@@ -131,12 +131,20 @@ class BaseTrainer:
         ...
 
     def init_vae(self):
+        # [csig-taesd-enc] 编码器可训时收集它的参数；其余情况恒为空列表，下游按空处理。
+        self.tae_params = []
         if self.config.get("vae", "sd") == "taesd":
             # [csig-taesd] 冻结的 TAESD 编解码。只有它换了，其余训练配方全部对齐官方 up/main。
             from HYPIR.utils.taesd import build_taesd, TAESD_A, TAESD_B
+            train_enc = self.config.get("train_tae_encoder", False)
             self.vae = build_taesd(
-                self.weight_dtype, self.device, compile_parts=self.config.get("compile", False))
-            logger.info("VAE = TAESD (frozen), latent 换算 A=%.5f B=%.5f" % (TAESD_A, TAESD_B))
+                self.weight_dtype, self.device, compile_parts=self.config.get("compile", False),
+                train_encoder=train_enc)
+            if train_enc:
+                self.tae_params = [p for p in self.vae.tae.encoder.parameters() if p.requires_grad]
+            logger.info("VAE = TAESD (%s), latent 换算 A=%.5f B=%.5f, 可训 %.3f M" % (
+                "encoder 可训" if train_enc else "frozen", TAESD_A, TAESD_B,
+                sum(p.numel() for p in self.tae_params) / 1e6))
             return
 
         self.vae = AutoencoderKL.from_pretrained(
@@ -217,7 +225,9 @@ class BaseTrainer:
         else:
             optimizer_cls = None
 
-        self.G_params = list(filter(lambda p: p.requires_grad, self.G.parameters()))
+        # [csig-taesd-enc] TAESD 编码器和 LoRA 一起进 G_opt：两边都是 fp32、同 device，
+        # fused AdamW 的同构要求成立；clip_grad_norm_ 也按全局范数一起裁，与官方对 LoRA 的处理一致。
+        self.G_params = list(filter(lambda p: p.requires_grad, self.G.parameters())) + self.tae_params
         self.G_opt = optimizer_cls(
             self.G_params,
             lr=self.config.lr_G,
@@ -314,6 +324,17 @@ class BaseTrainer:
             ema_resume_pth=ema_resume_pth,
             verbose=self.accelerator.is_local_main_process,
         )
+        # [csig-taesd-enc] 编码器单独一份 EMA，decay 与 LoRA 一致。不共用 ema_handler 是因为
+        # EMAModel 绑定单个 nn.Module，而编码器不在 self.G 里。两者必须同步取用：
+        # 评估时若拿 EMA 的 LoRA 配 raw 编码器，等于把两个不同训练时刻的权重拼在一起。
+        self.tae_ema = EMAModel(
+            self.vae.tae.encoder if self.tae_params else None,
+            decay=self.config.ema_decay,
+            use_ema=self.config.use_ema and bool(self.tae_params),
+            ema_resume_pth=(os.path.join(self.config.resume_from_checkpoint, "tae_encoder_ema.pth")
+                            if ema_resume_pth and self.tae_params else None),
+            verbose=False,
+        )
 
         global_step = 0
         if self.config.resume_from_checkpoint:
@@ -322,6 +343,13 @@ class BaseTrainer:
             logger.info(f"Resuming from checkpoint {path}")
             self.force_optimizer_ckpt_safe(path)
             self.accelerator.load_state(path)
+            # accelerate 只存 prepare 过的模块，编码器不在其中，单独接回来
+            if self.tae_params:
+                _p = os.path.join(path, "tae_encoder.pth")
+                if os.path.exists(_p):
+                    self.vae.tae.encoder.load_state_dict(
+                        torch.load(_p, map_location="cpu", weights_only=True))
+                    logger.info(f"Resumed TAESD encoder from {_p}")
             global_step = int(ckpt_name.split("-")[1])
             init_global_step = global_step
         else:
@@ -354,7 +382,16 @@ class BaseTrainer:
             c_txt = {k: v.expand(bs, *v.shape[1:]) for k, v in _c[1].items()}
         else:
             c_txt = self.encode_prompt(prompt)
-        z_lq = self.vae.encode(lq.to(self.weight_dtype)).latent_dist.sample()
+        # [csig-taesd-enc] 只有「编码器可训 且 本 batch 是 G 步」才建图：D 步的 z_lq 不参与反传，
+        # 建了图既占显存又不会被释放。判据与 run() 里的 generator_step 用同一个表达式，
+        # 且 batch_count 在 run() 循环末尾才自增，此处读到的与那边一致。
+        # autocast 是给 fp32 编码器参数配 bf16 输入用的；编码器冻结时权重本就是 bf16，
+        # autocast 对它是空操作，数值与改动前逐位相同。
+        _enc_grad = bool(self.tae_params) and (
+            (getattr(self, "batch_count", 0) // self.config.gradient_accumulation_steps) % 2 == 0)
+        with nullcontext() if _enc_grad else torch.no_grad():
+            with self.accelerator.autocast():
+                z_lq = self.vae.encode(lq.to(self.weight_dtype)).latent_dist.sample()
         timesteps = torch.full((bs,), self.config.model_t, dtype=torch.long, device=self.device)
         self.batch_inputs = BatchInput(
             gt=gt, lq=lq,
@@ -383,6 +420,13 @@ class BaseTrainer:
             loss_disc = self.D(x, for_G=True).mean() * self.config.lambda_gan
             loss_G = loss_l2 + loss_lpips + loss_disc
             self.accelerator.backward(loss_G)
+            # [csig-taesd-enc] self.vae 没进 accelerator.prepare —— 训练调的是 .encode()/.decode()
+            # 而不是 forward()，DDP 的 autograd hook 挂不上去，包了也不会同步。手动做梯度平均，
+            # 与 DDP 的 gradient averaging 等价（各 rank 初值相同，此后逐步保持一致）。
+            if self.tae_params and self.accelerator.num_processes > 1:
+                for p in self.tae_params:
+                    if p.grad is not None:
+                        torch.distributed.all_reduce(p.grad, op=torch.distributed.ReduceOp.AVG)
             if self.accelerator.sync_gradients:
                 self.accelerator.clip_grad_norm_(self.G_params, self.config.max_grad_norm)
             self.G_opt.step()
@@ -468,6 +512,7 @@ class BaseTrainer:
                     if generator_step:
                         # update EMA
                         self.ema_handler.update()
+                        self.tae_ema.update()
                     # [csig-speedup] print_vram_state 会走 memory_stats()，构一个大 dict 再摊平，
                     # 每步跑一次纯属浪费；一个 global_step（G+D 各一次）只更新一次描述。
                     if not generator_step:
@@ -579,6 +624,15 @@ class BaseTrainer:
         }
         torch.save(state_dict, os.path.join(save_dir, "state_dict.pth"))
         self.ema_handler.save_ema_weights(save_dir)
+        self.save_tae_encoder(save_dir)
+
+    def save_tae_encoder(self, save_dir):
+        """编码器 raw + EMA 各存一份（约 2.4 MB），评估时必须与同名的 LoRA 权重成对取用。"""
+        if not self.tae_params:
+            return
+        torch.save(self.vae.tae.encoder.state_dict(), os.path.join(save_dir, "tae_encoder.pth"))
+        if self.tae_ema.use_ema:
+            torch.save(self.tae_ema.ema_state_dict, os.path.join(save_dir, "tae_encoder_ema.pth"))
 
     def save_checkpoint(self):
         if self.accelerator.is_main_process:
@@ -600,4 +654,5 @@ class BaseTrainer:
 
             # Save ema weights
             self.ema_handler.save_ema_weights(save_path)
+            self.save_tae_encoder(save_path)
             logger.info(f"Saved ema weights to {save_path}")

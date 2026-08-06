@@ -48,6 +48,12 @@ def main():
     ap.add_argument("--tag", default="")
     ap.add_argument("--prompt", default="train", choices=["train", "legacy"],
                     help="train=csig/prompt.py 的训练用 prompt（默认）；legacy=旧的赛题长句")
+    # 默认 sd 是为了与历史数字可比 —— 注意这是个口径陷阱：HYPIR/enhancer/base.py 写死
+    # AutoencoderKL，所以此前记录的全部闸门数字（基线 13.5%、drt@3000 18.9%）都是
+    # SD-VAE 推理出来的，而提交包 runner.py 用的是 TAESD。换口径后基线必须重跑。
+    ap.add_argument("--vae", default="sd", choices=["sd", "taesd"])
+    ap.add_argument("--tae-weight", default=None,
+                    help="训练产出的编码器权重，与同目录 LoRA 成对取用（raw 配 raw，EMA 配 EMA）")
     a = ap.parse_args()
     prompt = TRAIN_PROMPT if a.prompt == "train" else LEGACY_PROMPT
     print("prompt=%s %r" % (a.prompt, prompt[:60]))
@@ -64,6 +70,10 @@ def main():
                      weight_path=a.weight_path, lora_modules=LORA_MODULES,
                      lora_rank=256, model_t=200, coeff_t=200, device="cuda")
     en.init_models()
+    if a.vae == "taesd":
+        from HYPIR.utils.taesd import build_taesd
+        en.vae = build_taesd(en.weight_dtype, en.device, enc_weight=a.tae_weight)
+    print("vae=%s tae_weight=%s" % (a.vae, a.tae_weight))
 
     def load(p):
         return torch.from_numpy(cv2.imread(p)[:, :, ::-1].copy()).permute(2, 0, 1)[None].float().cuda() / 255.

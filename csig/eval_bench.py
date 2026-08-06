@@ -52,6 +52,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--weight", required=True)
     ap.add_argument("--vae", choices=["sd", "taesd"], required=True)
+    # 训练产出的 TAESD 编码器权重（snapshots/step-N/tae_encoder{,_ema}.pth）。
+    # 必须与同一目录下的 LoRA 成对取用：raw 配 raw、EMA 配 EMA。
+    ap.add_argument("--tae-weight", default=None)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--bench-dir", default=BENCH)
     ap.add_argument("--limit", type=int, default=0, help="只取前 N 对，扫曲线时用 300")
@@ -78,7 +81,7 @@ def main():
     en.init_models()
     if a.vae == "taesd":
         from HYPIR.utils.taesd import build_taesd
-        en.vae = build_taesd(en.weight_dtype, en.device)
+        en.vae = build_taesd(en.weight_dtype, en.device, enc_weight=a.tae_weight)
 
     import pyiqa
     metrics = {k: pyiqa.create_metric(k, device="cuda") for k in FR_METRICS + NR_METRICS}

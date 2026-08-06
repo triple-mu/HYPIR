@@ -48,13 +48,32 @@ class TAESDWrapper(torch.nn.Module):
         return self.tae.decode(z * TAESD_A + TAESD_B)
 
 
-def build_taesd(dtype, device, compile_parts=False):
-    """建一个冻结的 TAESD 并包好。compile_parts 只在训练侧用。"""
+def build_taesd(dtype, device, compile_parts=False, train_encoder=False, enc_weight=None):
+    """建一个 TAESD 并包好。compile_parts 只在训练侧用。
+
+    train_encoder=True 解冻编码器，解码器**始终**冻结。依据是 OSEDiff Table 7（RealSR）：
+    编解码器都不动 CLIPIQA 0.5303 / MUSIQ 58.99；只微调编码器 0.6693 / 69.09；
+    连解码器一起微调反而退回 0.5778 / 65.92。原文的理由是「fixing the VAE decoder is
+    important to ensure that the UNet output remains in the original VAE latent space」。
+    HYPIR 官方走的也是这条路（HF repo 里有独立的 sd2_denoise_ae_encoder.pth）。
+
+    enc_weight 用于推理侧加载训练产出的编码器权重。
+    """
     from diffusers import AutoencoderTiny
 
     tae = AutoencoderTiny.from_pretrained("madebyollin/taesd", torch_dtype=dtype).to(device)
     tae.eval().requires_grad_(False)
+    if enc_weight:
+        sd = torch.load(enc_weight, map_location="cpu", weights_only=True)
+        tae.encoder.load_state_dict({k: v.to(device=device, dtype=dtype) for k, v in sd.items()})
+    if train_encoder:
+        # 与 LoRA 同样的处理：可训参数留 fp32，计算靠 autocast 走半精度
+        tae.encoder.requires_grad_(True)
+        for p in tae.encoder.parameters():
+            p.data = p.data.float()
     if compile_parts:
-        tae.encoder = torch.compile(tae.encoder)
+        # 可训时不编 encoder：fp32 参数配 autocast 的 bf16 输入会反复触发重编译
+        if not train_encoder:
+            tae.encoder = torch.compile(tae.encoder)
         tae.decoder = torch.compile(tae.decoder)
     return TAESDWrapper(tae)
