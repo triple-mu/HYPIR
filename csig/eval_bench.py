@@ -27,7 +27,11 @@ import numpy as np
 import torch
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _HERE)
+# 仓库根也要进 path：否则不 source csig/env.sh（那里设了 PYTHONPATH）直接跑就是
+# ModuleNotFoundError: No module named 'HYPIR'。real_gate.py 一直有这一行。
+sys.path.insert(0, os.path.join(_HERE, ".."))
 from prompt import PROMPT
 from HYPIR.enhancer.sd2 import SD2Enhancer
 
