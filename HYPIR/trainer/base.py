@@ -458,7 +458,9 @@ class BaseTrainer:
         # 用像素 GT 才能逼 G 在 latent 里预补偿解码损失）。
         d_real = gt
         if self.config.get("d_real_roundtrip", False):
-            with torch.no_grad():
+            # autocast 的理由同 prepare_batch_inputs：编码器可训时参数是 fp32，输入是 bf16。
+            # 编码器冻结时权重本就是 bf16，autocast 对这段是空操作，数值不变。
+            with torch.no_grad(), self.accelerator.autocast():
                 _z = self.vae.encode(gt.to(self.weight_dtype)).latent_dist.sample()
                 d_real = self.vae.decode(_z).sample.float()
         with self.accelerator.accumulate(self.D):
