@@ -227,9 +227,21 @@ class BaseTrainer:
 
         # [csig-taesd-enc] TAESD 编码器和 LoRA 一起进 G_opt：两边都是 fp32、同 device，
         # fused AdamW 的同构要求成立；clip_grad_norm_ 也按全局范数一起裁，与官方对 LoRA 的处理一致。
-        self.G_params = list(filter(lambda p: p.requires_grad, self.G.parameters())) + self.tae_params
+        #
+        # lr_tae 默认等于 lr_G（不改变既有行为），但两者的参数尺度差一个量级：
+        # 编码器参数 RMS 0.0486、LoRA 0.00478，AdamW 每步的绝对更新量都约等于 lr，
+        # 所以同 lr 下编码器的**相对**更新速率只有 LoRA 的 1/10。
+        _lora = list(filter(lambda p: p.requires_grad, self.G.parameters()))
+        self.G_params = _lora + self.tae_params
+        _groups = [{"params": _lora, "lr": self.config.lr_G}]
+        if self.tae_params:
+            _lr_tae = self.config.get("lr_tae", None) or self.config.lr_G
+            _groups.append({"params": self.tae_params, "lr": _lr_tae})
+            logger.info("TAESD 编码器: %.3f M 参数, lr=%g (lr_G=%g), 梯度手动 all_reduce (world=%d)"
+                        % (sum(p.numel() for p in self.tae_params) / 1e6, _lr_tae,
+                           self.config.lr_G, self.accelerator.num_processes))
         self.G_opt = optimizer_cls(
-            self.G_params,
+            _groups,
             lr=self.config.lr_G,
             **self.config.opt_kwargs,
         )
