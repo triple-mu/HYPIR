@@ -1,44 +1,15 @@
-"""CSIG-2026 赛道二的训练数据管线 —— 替换 HYPIR 的 RealESRGAN 退化。
+"""HQ corpus screening helpers plus compatibility re-exports.
 
-接口契约与 HYPIR 原件一致，可直接在 configs/sd2_train.yaml 里换 target：
-    dataset:         -> CSIGDataset          返回 {"hq": [3,H,W] [0,1] RGB, "txt": str}
-    batch_transform: -> CSIGBatchTransform   返回 {"GT": [B,3,H,W], "LQ": [B,3,H,W], "txt": [...]}
-
-与 RealESRGAN 那套的关键差别（全部来自实测，见 ../FINDINGS.md §5 与 §9.5）：
-
-| 维度       | RealESRGAN（HYPIR 原配置）        | 真实退化（本文件实现）              |
-|-----------|----------------------------------|----------------------------------|
-| 噪声       | 50% 概率高斯 σ∈[1,30]+泊松+灰噪   | **完全没有**（实测 σ<0.1 灰阶）    |
-| JPEG      | q ∈ [30, 95] 随机                 | **恒为 q95**（字节级确认）         |
-| 模糊核     | iso/aniso/plateau/sinc 混合       | 重尾单极点~四次、各向异性、空间变化 |
-| 训练目标   | `use_sharpener=True` USM 锐化后的 GT | **原始 GT**（USM 把天花板从 8.340 压到 7.965） |
-
-**噪声那条最要命**：原配置有一半样本带强噪声，模型学会了激进降噪；喂给它完全无噪的输入，
-那套降噪行为只会吃掉本就稀缺的细节。
-
-⚠️ **crop 必须在原生分辨率上裁**。退化的 σ≈2-4 px 是在 4K 栅格上测的；
-先把 4K 缩到 512 再加退化，相对模糊强度会差 8 倍。用 `screen_corpus.py` 筛数据源。
+The old copy of the training degradation lived here and drifted away from the
+actual training module.  ``HYPIR.dataset.csig`` is now the single source of truth;
+this file keeps only the corpus-quality gates used by preparation scripts.
 """
 
-import random
-from typing import Dict, List, Optional, Union
+import os
+import sys
+from typing import Optional
 
-import cv2
 import numpy as np
-import torch
-import torch.nn.functional as F
-
-from torch.utils.data import Dataset
-
-# 参数范围与 degrade.py 保持一致（那边是单图 numpy 版，这里是 GPU 批量版）
-SIGMA_RANGE = (1.85, 3.45)
-ANISO_RANGE = (1.0, 1.45)
-POLE_RANGE = (0.9, 2.1)
-SPATIAL_VAR = 0.4
-AFFINE_A = (1.00, 1.10)
-AFFINE_B = (-14.0 / 255.0, 0.0)   # 这里工作在 [0,1] 域，故除以 255
-JPEG_QUALITY = 95
-P_AFFINE = 0.6
 
 
 def hf_max(gray: np.ndarray, s: int = 512, grid: int = 4, nb: int = 64) -> float:
@@ -104,9 +75,38 @@ def ijg_quality(table) -> Optional[int]:
     return best if best_err <= 3.0 else None   # 拟合不上就是厂商表
 
 
+def source_bpp(path: str, image=None) -> tuple[float, bool]:
+    """Return comparable primary-image bpp and whether this is ISO gain-map MPO.
+
+    Huawei MPO files contain roughly 5.8--6.1 MB of unindexed private tail data.
+    Counting that tail as JPEG payload inflated the old 4.56--5.81 bpp estimate.
+    For a valid ISO 21496 gain-map MPO we report frame-0 bpp and mark it so the
+    single-frame corpus threshold can be skipped; its vendor qtable and container
+    are not comparable to an ordinary IJG JPEG.
+    """
+
+    from PIL import Image
+
+    im = image or Image.open(path)
+    is_gain_map_mpo = False
+    payload_size = os.path.getsize(path)
+    if getattr(im, "format", None) == "MPO":
+        try:
+            from csig.mpo_hdr import inspect_file
+
+            info = inspect_file(path)
+            if info.frames:
+                payload_size = info.frames[0].size
+            is_gain_map_mpo = info.gain_map_frame_index is not None
+        except (OSError, ValueError):
+            # Screening is a heuristic.  A malformed MPO will still face the
+            # conservative whole-file threshold and later decoder validation.
+            pass
+    return payload_size * 8.0 / (im.width * im.height), is_gain_map_mpo
+
+
 def screen(path: str) -> bool:
     """三道闸门。任何一道不过就别拿来当训练 GT。"""
-    import os
     from PIL import Image
     im = Image.open(path)
     # 闸门 1：谱截止——剔除插值放大 / 本身就软。这是主判据
@@ -118,109 +118,24 @@ def screen(path: str) -> bool:
         iq = ijg_quality(q[0])
         if iq is not None and iq < 93:
             return False
-    # 闸门 3：bpp 交叉验证未被过度压缩
-    # 标尺：赛题原生 4.56-5.81 | HDR+ 4.17 | PD12M 3.11 | 赛题GT 2.20 | 4KLSDB 1.6 | Pexels 0.83
-    return os.path.getsize(path) * 8 / (im.width * im.height) >= 2.0
+    # 闸门 3：单帧普通图用 bpp 交叉验证未被过度压缩。ISO gain-map MPO
+    # 使用厂商量化表且带独立辅助帧，不能套同一阈值。
+    bpp, is_gain_map_mpo = source_bpp(path, im)
+    return is_gain_map_mpo or bpp >= 2.0
 
 
-class CSIGDataset(Dataset):
-    """从原生高分辨率图上随机裁 512x512。只负责出 HQ，退化在 batch transform 里做。"""
+# Keep direct ``python csig/<tool>.py`` entry points working: for those commands
+# Python puts ``csig/`` rather than the repository root on sys.path.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
-    def __init__(self, file_list: str, out_size: int = 512, prompt: str = "",
-                 use_hflip: bool = True, image_path_prefix: str = "") -> None:
-        with open(file_list, "r") as f:
-            self.paths = [l.strip() for l in f if l.strip()]
-        self.prefix = image_path_prefix
-        self.out_size = out_size
-        self.prompt = prompt
-        self.use_hflip = use_hflip
-
-    def __len__(self) -> int:
-        return len(self.paths)
-
-    def __getitem__(self, idx: int) -> Dict[str, Union[torch.Tensor, str]]:
-        s = self.out_size
-        for _ in range(10):  # 少量坏文件直接换一张，不让训练挂掉
-            path = self.prefix + self.paths[idx]
-            img = cv2.imread(path)
-            if img is not None and img.shape[0] >= s and img.shape[1] >= s:
-                break
-            idx = random.randrange(len(self.paths))
-        else:
-            raise RuntimeError("连续 10 次读图失败，检查 file_list")
-
-        y = random.randint(0, img.shape[0] - s)
-        x = random.randint(0, img.shape[1] - s)
-        crop = img[y:y + s, x:x + s]
-        if self.use_hflip and random.random() < 0.5:
-            crop = crop[:, ::-1]
-        hq = torch.from_numpy(crop[..., ::-1].transpose(2, 0, 1).copy()).float() / 255.0
-        return {"hq": hq, "txt": self.prompt}
+# Keep old import sites working without maintaining a second degradation copy.
+from HYPIR.dataset.csig import CSIGBatchTransform, CSIGDataset, csig_collate  # noqa: E402,F401
+from HYPIR.dataset.csig_degradation import *  # noqa: E402,F401,F403
 
 
-class CSIGBatchTransform:
-    """GPU 批量退化。逐样本独立采参数，与 degrade.py 的单图版数学一致。"""
-
-    def __init__(self, hq_key: str = "hq", extra_keys: Optional[List[str]] = None,
-                 jpeg_quality: int = JPEG_QUALITY) -> None:
-        self.hq_key = hq_key
-        self.extra_keys = extra_keys or ["txt"]
-        self.jpeg_quality = jpeg_quality
-        self.jpeger = None  # 延迟到第一次调用（要拿 device）
-
-    def _lowpass(self, x: torch.Tensor, sigma: torch.Tensor, aniso: torch.Tensor,
-                 theta: torch.Tensor, pole: torch.Tensor) -> torch.Tensor:
-        """各向异性重尾低通，逐样本参数。x: [B,3,H,W]。
-
-        H(f) = 1 / (1 + (f'/f0)^2)^pole，f' 是按 (aniso, theta) 椭圆缩放后的频率。
-        f0 = 0.1325/sigma 是高斯的 -6dB 点换算。纯高斯已被实测拒绝（重尾更贴）。
-        """
-        b, _, h, w = x.shape
-        fy = torch.fft.fftfreq(h, device=x.device).view(1, h, 1)
-        fx = torch.fft.fftfreq(w, device=x.device).view(1, 1, w)
-        c = torch.cos(theta).view(b, 1, 1)
-        s = torch.sin(theta).view(b, 1, 1)
-        a = aniso.view(b, 1, 1)
-        u = (fx * c + fy * s) / a
-        v = -fx * s + fy * c
-        f0 = (0.1325 / sigma).view(b, 1, 1)
-        resp = 1.0 / (1.0 + (u * u + v * v) / (f0 * f0)) ** pole.view(b, 1, 1)
-        return torch.fft.ifft2(torch.fft.fft2(x) * resp.unsqueeze(1)).real
-
-    @torch.no_grad()
-    def __call__(self, batch: Dict) -> Dict:
-        hq = batch[self.hq_key]
-        b, _, h, w = hq.shape
-        dev = hq.device
-
-        def U(lo, hi):
-            return torch.empty(b, device=dev).uniform_(lo, hi)
-
-        # 1) 低通（含图内空间变化：两档模糊 + 平滑随机掩码混合）
-        sigma = U(*SIGMA_RANGE)
-        aniso = U(*ANISO_RANGE)
-        theta = U(0.0, float(np.pi))
-        pole = U(*POLE_RANGE)
-        lo = self._lowpass(hq, sigma * (1 - SPATIAL_VAR), aniso, theta, pole)
-        hi = self._lowpass(hq, sigma * (1 + SPATIAL_VAR), aniso, theta, pole)
-        m = torch.rand(b, 1, 8, 8, device=dev)
-        m = F.interpolate(m, size=(h, w), mode="bicubic", align_corners=False).clamp(0, 1)
-        out = lo * (1 - m) + hi * m
-
-        # 2) 逐通道仿射 + clip（clip 到 0 产生黑位压死，实测真实数据有 4.5-7.8% 像素死在 0）
-        do = (torch.rand(b, device=dev) < P_AFFINE).float().view(b, 1, 1, 1)
-        ca = torch.empty(b, 3, 1, 1, device=dev).uniform_(*AFFINE_A)
-        cb = torch.empty(b, 3, 1, 1, device=dev).uniform_(*AFFINE_B)
-        out = out * (1 - do + do * ca) + do * cb
-        out = out.clamp(0, 1)
-
-        # 3) JPEG q95（DiffJPEG 与 libjpeg 的 4:2:0 一致）
-        if self.jpeger is None:
-            from HYPIR.dataset.diffjpeg import DiffJPEG
-            self.jpeger = DiffJPEG(differentiable=False).to(dev)
-        self.jpeger.to(out)
-        q = out.new_full((b,), float(self.jpeg_quality))
-        out = self.jpeger(out, quality=q)
-
-        lq = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
-        return {"GT": hq, "LQ": lq, **{k: batch[k] for k in self.extra_keys}}
+__all__ = [
+    "CSIGBatchTransform", "CSIGDataset", "csig_collate", "hf_max", "ijg_quality", "screen",
+    "source_bpp",
+]

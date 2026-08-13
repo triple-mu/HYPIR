@@ -20,13 +20,13 @@ import numpy as np
 from concurrent.futures import ProcessPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from csig_data import hf_max, ijg_quality
+from csig_data import hf_max, ijg_quality, source_bpp
 
 MIN_LONG = 3000
 MIN_SHORT = 512
 HF_MIN = 0.005      # 谱截止：保留 ~92% 真原生，误收 ~15% 假高清，误收 0% 模糊图
 IJG_MIN = 93        # 量化表：仅对 IJG 族生效，厂商自研表跳过
-BPP_MIN = 2.0       # 标尺: 赛题原生 4.56-5.81 | HDR+ 4.17 | PD12M 3.11 | ShopSign 1.84 | 4KLSDB 1.6
+BPP_MIN = 2.0       # 仅适用于普通单帧编码；ISO gain-map MPO 单独识别
 
 
 def check(args):
@@ -45,7 +45,8 @@ def check(args):
             iq = ijg_quality(q[0])
             if iq is not None and iq < IJG_MIN:
                 return path, False, "量化表"
-        if os.path.getsize(path) * 8 / (im.width * im.height) < BPP_MIN:
+        bpp, is_gain_map_mpo = source_bpp(path, im)
+        if not is_gain_map_mpo and bpp < BPP_MIN:
             return path, False, "bpp"
         return path, True, "通过"
     except Exception:

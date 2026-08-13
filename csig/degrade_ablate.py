@@ -16,21 +16,19 @@
     python csig/degrade_ablate.py [--crops 8]
 """
 import argparse
+from dataclasses import replace
 import os
 import sys
 
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import iqa
-from HYPIR.dataset.csig import (
-    SIGMA_RANGE, ANISO_RANGE, POLE_RANGE, SPATIAL_VAR,
-    AFFINE_A, AFFINE_B, JPEG_QUALITY, P_AFFINE, CSIGBatchTransform,
-)
+from HYPIR.dataset.csig import CSIGBatchTransform
+from HYPIR.dataset.csig_degradation import DEFAULT_CONFIG, sample_degradation
 
 CSIG = os.environ.get("CSIG", "/root/.cache/huggingface/csig")
 VAL = os.path.join(CSIG, "data/csig_bench/赛题二/验证集")
@@ -38,40 +36,33 @@ VAL = os.path.join(CSIG, "data/csig_bench/赛题二/验证集")
 
 def degrade(hq, tf, *, lowpass=True, affine=True, jpeg=True, quant=True,
             sigma_scale=1.0, seed=0):
-    """按开关施加退化。参数采样固定种子，各变体之间可比。"""
-    g = torch.Generator(device="cpu").manual_seed(seed)
-    b, _, h, w = hq.shape
-    dev = hq.device
-
-    def U(lo, hi):
-        return (torch.rand(b, generator=g) * (hi - lo) + lo).to(dev)
-
-    out = hq
-    if lowpass:
-        sigma = U(*SIGMA_RANGE) * sigma_scale
-        lo = tf._lowpass(out, sigma * (1 - SPATIAL_VAR), U(*ANISO_RANGE),
-                         U(0.0, float(np.pi)), U(*POLE_RANGE))
-        hi_ = tf._lowpass(out, sigma * (1 + SPATIAL_VAR), U(*ANISO_RANGE),
-                          U(0.0, float(np.pi)), U(*POLE_RANGE))
-        m = torch.rand(b, 1, 8, 8, generator=g).to(dev)
-        m = F.interpolate(m, size=(h, w), mode="bicubic", align_corners=False).clamp(0, 1)
-        out = lo * (1 - m) + hi_ * m
-    if affine:
-        do = (torch.rand(b, generator=g).to(dev) < P_AFFINE).float().view(b, 1, 1, 1)
-        ca = (torch.rand(b, 3, 1, 1, generator=g) * (AFFINE_A[1] - AFFINE_A[0]) + AFFINE_A[0]).to(dev)
-        cb = (torch.rand(b, 3, 1, 1, generator=g) * (AFFINE_B[1] - AFFINE_B[0]) + AFFINE_B[0]).to(dev)
-        out = (out * (1 - do + do * ca) + do * cb).clamp(0, 1)
-    else:
-        out = out.clamp(0, 1)
-    if jpeg:
-        if tf.jpeger is None:
-            from HYPIR.dataset.diffjpeg import DiffJPEG
-            tf.jpeger = DiffJPEG(differentiable=False).to(dev)
-        tf.jpeger.to(out)
-        out = tf.jpeger(out, quality=out.new_full((b,), float(JPEG_QUALITY)))
-    if quant:
-        out = torch.clamp((out * 255.0).round(), 0, 255) / 255.0
-    return out.clamp(0, 1)
+    """按开关施加训练真源；固定 sample_seed 使各变体逐样本可比。"""
+    rng = np.random.default_rng(seed)
+    config = replace(DEFAULT_CONFIG, near_native_given_weak=0.0)
+    metas = [sample_degradation(
+        rng, profile="ordinary", config=config, sample_seed=seed + i,
+    ) for i in range(hq.shape[0])]
+    for meta in metas:
+        if not lowpass:
+            meta.update(
+                operator="none", kernel_family=None, sigma_x=None, sigma_y=None,
+                theta=None, pole=None, spatial_variation=0.0, resize_scale=None,
+                down_mode=None, down_antialias=None, up_mode=None, subpixel_shift_xy=None,
+                edge_aware_strength=0.0, unsharp_amount=0.0,
+                fusion_shift_xy=None, fusion_opacity=0.0,
+                local_warp_amplitude=0.0,
+            )
+        elif meta["sigma_x"] is not None:
+            meta["sigma_x"] *= sigma_scale
+            meta["sigma_y"] *= sigma_scale
+        if not affine:
+            meta.update(
+                tone_mode="identity", tone_gain=[1.0, 1.0, 1.0],
+                tone_bias=[0.0, 0.0, 0.0], tone_gamma=1.0,
+                highlight_compression=0.0, chroma_blur=0.0,
+                chroma_shift_xy=None, saturation=1.0,
+            )
+    return tf.degrader.apply(hq, metas, apply_jpeg=jpeg, quantize=quant).clamp(0, 1)
 
 
 def main():
@@ -114,7 +105,9 @@ def main():
         fs, ns, ps = [], [], []
         for i in range(x.shape[0]):
             f, nn, p = iqa.score(x[i:i + 1] * 2 - 1, ref[i:i + 1] * 2 - 1)
-            fs.append(f); ns.append(nn); ps.append(p)
+            fs.append(f)
+            ns.append(nn)
+            ps.append(p)
         return float(np.mean(fs)), float(np.mean(ns)), float(np.mean(ps))
 
     print(f"源: 赛题验证集 {len(pairs)} 对 x {a.crops} 个 512 crop = {n} 个样本（同位置配对）\n")

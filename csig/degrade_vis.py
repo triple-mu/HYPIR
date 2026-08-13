@@ -14,70 +14,32 @@ import sys
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
-from HYPIR.dataset.csig import (SIGMA_RANGE, ANISO_RANGE, POLE_RANGE, SPATIAL_VAR,
-                                AFFINE_A, AFFINE_CHROMA, AFFINE_PIVOT, AFFINE_B_JITTER, JPEG_RANGE, P_AFFINE,
-                                P_RESAMPLE, SCALE_RANGE, NOISE_SIGMA, P_CLEAN,
-                                CSIGBatchTransform)
+from HYPIR.dataset.csig import CSIGBatchTransform  # noqa: E402
+from HYPIR.dataset.csig_degradation import degrade_tensor  # noqa: E402
 
 
 @torch.no_grad()
 def degrade(hq, tf, seed):
-    """完整走一遍 v2 管线，返回 (lq, 本次抽到的参数描述)。"""
-    g = torch.Generator(device="cpu").manual_seed(seed)
-    b, _, h, w = hq.shape
-    dev = hq.device
-    U = lambda lo, hi: (torch.rand(b, generator=g) * (hi - lo) + lo).to(dev)
-
-    info = []
-    use_rs = float(torch.rand(1, generator=g)) < P_RESAMPLE
-    if use_rs:
-        s = float(torch.empty(1).uniform_(*SCALE_RANGE))
-        modes = ("bilinear", "bicubic", "area")
-        dm = modes[int(torch.randint(3, (1,), generator=g))]
-        um = modes[int(torch.randint(2, (1,), generator=g))]
-        small = F.interpolate(hq, size=(max(int(h / s), 8), max(int(w / s), 8)), mode=dm,
-                              **({} if dm == "area" else {"align_corners": False}))
-        out = F.interpolate(small, size=(h, w), mode=um, align_corners=False)
-        info.append("重采样 %.1fx %s->%s" % (s, dm, um))
-    else:
-        sigma = U(*SIGMA_RANGE)
-        lo = tf._lowpass(hq, sigma * (1 - SPATIAL_VAR), U(*ANISO_RANGE),
-                         U(0.0, float(np.pi)), U(*POLE_RANGE))
-        hi = tf._lowpass(hq, sigma * (1 + SPATIAL_VAR), U(*ANISO_RANGE),
-                         U(0.0, float(np.pi)), U(*POLE_RANGE))
-        m = torch.rand(b, 1, 8, 8, generator=g).to(dev)
-        m = F.interpolate(m, size=(h, w), mode="bicubic", align_corners=False).clamp(0, 1)
-        out = lo * (1 - m) + hi * m
-        info.append("频域低通 sigma=%.2f" % float(sigma))
-    if float(torch.rand(1, generator=g)) < P_CLEAN:
-        out = hq
-        info.append("（本次抽中免退化）")
-    do = float(torch.rand(1, generator=g)) < P_AFFINE
-    if do:
-        gg = (torch.rand(b,1,1,1, generator=g)*(AFFINE_A[1]-AFFINE_A[0])+AFFINE_A[0]).to(dev)
-        ca = gg + (torch.rand(b,3,1,1, generator=g)*2-1).to(dev)*AFFINE_CHROMA
-        cb = (1-ca)*AFFINE_PIVOT + (torch.rand(b,3,1,1, generator=g)*2-1).to(dev)*AFFINE_B_JITTER
-        out = (out * ca + cb).clamp(0, 1)
-        info.append("色调 a=%.3f" % float(gg))
-    else:
-        out = out.clamp(0, 1)
-    if tf.jpeger is None:
-        from HYPIR.dataset.diffjpeg import DiffJPEG
-        tf.jpeger = DiffJPEG(differentiable=False).to(dev)
-    tf.jpeger.to(out)
-    q = float(torch.rand(1, generator=g)) * (JPEG_RANGE[1] - JPEG_RANGE[0]) + JPEG_RANGE[0]
-    out = tf.jpeger(out, quality=out.new_full((b,), q))
-    info.append("JPEG q%d" % round(q))
-    ns = float(torch.rand(1, generator=g)) * (NOISE_SIGMA[1] - NOISE_SIGMA[0]) + NOISE_SIGMA[0]
-    if ns > 0.2 / 255:
-        out = out + torch.randn(out.shape, generator=g).to(dev) * ns
-        info.append("噪声 %.2f/255" % (ns * 255))
-    out = torch.clamp((out.clamp(0, 1) * 255.0).round(), 0, 255) / 255.0
-    return out, "  ".join(info)
+    """走训练真源并用 sample_seed 完整回放。"""
+    out, metas = degrade_tensor(
+        hq,
+        rng=np.random.default_rng(seed),
+        sample_seeds=[seed + i for i in range(hq.shape[0])],
+        return_metadata=True,
+        degrader=tf.degrader,
+    )
+    m = metas[0]
+    parts = [m["profile"], m["severity"], m["operator"]]
+    if m["resize_scale"] is not None:
+        parts.append("%.1fx %s->%s" % (m["resize_scale"], m["down_mode"], m["up_mode"]))
+    if m["sigma_x"] is not None:
+        parts.append("sigma %.2f/%.2f" % (m["sigma_x"], m["sigma_y"]))
+    parts.append("tone=%s" % m["tone_mode"])
+    parts.append("jpeg=%s" % m["jpeg_qtable_profile"])
+    return out, "  ".join(parts)
 
 
 def main():
@@ -100,7 +62,6 @@ def main():
 
     import glob
     S = a.crop
-    rng = np.random.RandomState(0)
     for lqp in sorted(glob.glob(os.path.join(a.val, "*_lq.jpg"))):
         base = os.path.basename(lqp).replace("_lq.jpg", "")
         gtp = glob.glob(os.path.join(a.val, base + "_gt.*"))[0]

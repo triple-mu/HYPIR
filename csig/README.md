@@ -4,12 +4,22 @@
 
 产出 `<root>/lists/train_mix.txt`，直接填进 `HYPIR/configs/csig_train.yaml` 的 `file_list`。
 
+> **2026-08-13 更新：**训练真源现为
+> `HYPIR/dataset/csig_degradation.py`。早期的“唯一强低通 + 单一参数箱”已被三对验证图和
+> 100 张测试图的完整取证推翻；当前采用 ordinary 90% + night/HDR 10% 的可回放混合，
+> 含弱/近原生保护、空间变化低通、down-up、tone/chroma、计算摄影近似及逐域真实 JPEG
+> 量化表。完整接口、参数与验收命令见 [DEGRADATION-MIXTURE.md](../docs/DEGRADATION-MIXTURE.md)。
+>
+> file list 可选第二列：`path<TAB>ordinary` 或 `path<TAB>night_hdr`。有标签时优先使用，
+> 无标签时才按 90/10 抽样。构建混合时可加 `--profile hdrplus=night_hdr`。
+
 ---
 
 ## 一、这套管线在解决什么问题
 
-赛题表面是「图像增强」，实测是**伪装成 1× 的盲超分**：唯一实质成分是一个把高频彻底摧毁的强低通，
-损失构成为「高频被摧毁 78–98%｜色调仿射 0.9–22%｜JPEG ~1%｜色度 ~0.1%｜噪声 **0**」。
+赛题表面是「图像增强」，实质是同尺寸盲恢复。主退化仍是低通/ISP 细节压平，但并非唯一算子：
+三对验证图有不同强度、空间变化、重采样等价解和局部 tone/chroma；测试集另有 9 张华为
+ISO 21496-1 gain-map MPO 夜景子域，且部分测试输入接近原生清晰度。
 
 由此推出两条约束，整个管线都是围绕它们建的：
 
@@ -17,7 +27,8 @@
 实测真实 LQ 的感知强度相当于 **≈7× 重采样 / σ≈3.6 高斯**（不是此前认为的 2×）。
 而 HYPIR 原配置一半样本带 σ≤30 的高斯噪 + 泊松噪，真实 LQ 的噪声实测只有 **σ 0.014–0.090 灰阶**。
 模型学到的激进降噪，喂给它完全无噪的输入时只会吃掉本就稀缺的细节。
-配方实现见 `tools/degrade.py`（单图）与 `tools/csig_data.py`（GPU 批量），感知标定到中位 `p_rel 0.989`。
+配方实现见 `degrade.py`（单图真实 JPEG）、`../HYPIR/dataset/csig_degradation.py`
+（共享采样/张量执行）与 `../HYPIR/dataset/csig.py`（训练数据接入）。
 
 **2. 训练 GT 必须在原生分辨率上真正锐利。**
 退化的 σ≈2–4 px 是在**原生 4K 栅格**上测的。若先把 4K 缩到 512 再加退化，相对模糊强度差 8 倍。
@@ -48,7 +59,7 @@
 
 ## 三、三闸门：判断一张图能不能当训练 GT
 
-实现在 `tools/csig_data.py`（`hf_max` / `ijg_quality`）与 `tools/screen_dir.py`。
+实现在 `csig_data.py`（`hf_max` / `ijg_quality`）与 `screen_dir.py`。
 
 ### 闸门 1 · 谱截止 `hf_max >= 0.005`
 
@@ -76,9 +87,13 @@
 
 参考值：`369=Q95  441=Q94  518=Q93  814=Q89  1477=Q80`。
 
-### 闸门 3 · `bpp >= 2.0`
+### 闸门 3 · 普通单帧图 `bpp >= 2.0`
 
-标尺（实测）：赛题原生 **4.56–5.81** | HDR+ 4.17 | PD12M 3.11 | 赛题 GT 2.20 | ShopSign 1.84 | 4KLSDB 1.6 | Pexels 0.83。
+标尺（实测）：HDR+ 4.17 | PD12M 3.11 | 赛题 GT 2.20 | ShopSign 1.84 | 4KLSDB 1.6 | Pexels 0.83。
+
+9 张华为 MPO 必须例外处理：旧统计把未索引的 5.8–6.1 MB 私有尾块也算进了主图，才得到
+4.56–5.81 的假高 bpp。按 MPF 边界计算，主帧实际为 **0.65–1.96 bpp（中位 1.096）**；
+它们由 ISO 21496 gain map、厂商量化表和 ICC 共同识别，不能拿普通单帧 IJG 阈值误杀。
 
 ---
 
@@ -116,7 +131,7 @@ L2/L3a 两层存在的意义就是纠正这个偏差。若要更进一步，可�
 
 ---
 
-## 五、评估集（`tools/build_eval.py`）
+## 五、评估集（`build_eval.py`）
 
 **为什么必须单独造**：赛题验证集只有 3 张，全是建筑/远景城市；而测试集里
 **植被 26%、招牌 6%、器物 5%、街景 4% —— 覆盖为零**。拿 3 张建筑图调出来的参数，
@@ -127,7 +142,7 @@ L2/L3a 两层存在的意义就是纠正这个偏差。若要更进一步，可�
 
 产出 **177 对**（building 69 / vegetation 62 / skyline 24 / street 10 / signage 6 / object 6）。
 
-打分用 `tools/eval_p0.py`，指标是**保留增益** `(p_out − p_lq)/(p_gt − p_lq)`，
+打分用 `eval_p0.py`，指标是**保留增益** `(p_out − p_lq)/(p_gt − p_lq)`，
 其中 `p ≈ 13.674·TOPIQ-FR + 4.477·MANIQA − 5.731`。
 
 > **不要用 `p_out/p_lq` 比值** —— 合成评估集上 `p_lq≈0.14`（甚至为负），比值会爆到 13.9 或翻成 −6.1。
@@ -148,13 +163,13 @@ L2/L3a 两层存在的意义就是纠正这个偏差。若要更进一步，可�
 
 `pip install torch torchvision pillow numpy opencv-python-headless pyarrow huggingface_hub pyiqa`
 
-`hf` CLI 来自 `huggingface_hub`。`tools/iqa.py` 首次运行会联网下 TOPIQ-FR / MANIQA 权重。
+`hf` CLI 来自 `huggingface_hub`。`iqa.py` 首次运行会联网下 TOPIQ-FR / MANIQA 权重。
 
 ## 七、文件一览
 
 ```
 run_all.sh              一键驱动，STEPS=<层名> 可分步
-tools/
+csig/（本目录）
   degrade.py            退化配方（单图 numpy 版），含感知标定说明
   csig_data.py          Dataset + GPU 批量退化 + 三闸门（hf_max / ijg_quality / screen）
   prep_4klsdb.py        从 parquet 抽 HR + 内容过滤（丢人像）+ 三闸门
@@ -166,5 +181,5 @@ tools/
   eval_p0.py            在评估集上给一份 LoRA 权重打分
   iqa.py                TOPIQ-FR + MANIQA 封装
 env.sh / run_train.sh   训练环境与看门狗（见上级 FINDINGS.md）
-HYPIR/configs/csig_train.yaml  训练配置
+../configs/csig_train.yaml     训练配置
 ```

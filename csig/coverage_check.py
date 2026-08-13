@@ -22,8 +22,9 @@ import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
-import iqa
-from HYPIR.dataset.csig import CSIGBatchTransform
+import iqa  # noqa: E402
+from HYPIR.dataset.csig import CSIGBatchTransform  # noqa: E402
+from HYPIR.dataset.csig_degradation import degrade_tensor  # noqa: E402
 
 CSIG = os.environ.get("CSIG", "/root/.cache/huggingface/csig")
 VAL = os.path.join(CSIG, "data/csig_bench/赛题二/验证集")
@@ -84,39 +85,10 @@ def main():
 
 
 def _synth(tf, gt):
-    """对单张 GT 走一遍 v2 退化（复用 transform 的内部方法）。"""
-    from HYPIR.dataset.csig import (SIGMA_RANGE, ANISO_RANGE, POLE_RANGE, SPATIAL_VAR,
-                                    AFFINE_A, AFFINE_B, JPEG_RANGE, P_AFFINE,
-                                    P_RESAMPLE, NOISE_SIGMA, P_CLEAN)
-    import torch.nn.functional as F
-    b, _, h, w = gt.shape
-    dev = gt.device
-
-    def U(lo, hi):
-        return torch.empty(b, device=dev).uniform_(lo, hi)
-
-    sigma = U(*SIGMA_RANGE)
-    lo = tf._lowpass(gt, sigma * (1 - SPATIAL_VAR), U(*ANISO_RANGE), U(0.0, float(np.pi)), U(*POLE_RANGE))
-    hi = tf._lowpass(gt, sigma * (1 + SPATIAL_VAR), U(*ANISO_RANGE), U(0.0, float(np.pi)), U(*POLE_RANGE))
-    m = torch.rand(b, 1, 8, 8, device=dev)
-    m = F.interpolate(m, size=(h, w), mode="bicubic", align_corners=False).clamp(0, 1)
-    out = lo * (1 - m) + hi * m
-    if float(torch.rand(1)) < P_RESAMPLE:
-        out = tf._resample_chain(gt)
-    if float(torch.rand(1)) < P_CLEAN:
-        out = gt
-    do = (torch.rand(b, device=dev) < P_AFFINE).float().view(b, 1, 1, 1)
-    ca = torch.empty(b, 3, 1, 1, device=dev).uniform_(*AFFINE_A)
-    cb = torch.empty(b, 3, 1, 1, device=dev).uniform_(*AFFINE_B)
-    out = (out * (1 - do + do * ca) + do * cb).clamp(0, 1)
-    if tf.jpeger is None:
-        from HYPIR.dataset.diffjpeg import DiffJPEG
-        tf.jpeger = DiffJPEG(differentiable=False).to(dev)
-    tf.jpeger.to(out)
-    out = tf.jpeger(out, quality=torch.empty(b, device=dev).uniform_(*JPEG_RANGE))
-    ns = torch.empty(b, 1, 1, 1, device=dev).uniform_(*NOISE_SIGMA)
-    out = (out + torch.randn_like(out) * ns).clamp(0, 1)
-    return torch.clamp((out * 255.0).round(), 0, 255) / 255.0
+    """对单张 GT 走训练真源；状态 RNG 让连续调用得到独立样本。"""
+    if not hasattr(_synth, "rng"):
+        _synth.rng = np.random.default_rng(20260813)
+    return degrade_tensor(gt, rng=_synth.rng, degrader=tf.degrader)
 
 
 if __name__ == "__main__":

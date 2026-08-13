@@ -1,8 +1,9 @@
-# CSIG-2026 赛道二：在实测退化配方上后训练 HYPIR LoRA。
+# CSIG-2026 赛道二：在取证标定的多分支退化混合上后训练 HYPIR LoRA。
 #
 # 与原版 sd2_train.yaml 的差异（依据见 csig/README.md）：
-#   1. 数据管线换成 csig：nvJPEG GPU 解码 + 实测退化（无噪声、恒 q95、重尾各向异性核）
-#      原版一半样本带 sigma<=30 强噪，而真实 LQ 实测 sigma 0.014-0.090 灰阶
+#   1. 普通域 90%：弱/中/强空间变化低通与 down-up 混合，末端固定真实 Q95/4:2:0，
+#      不加末端随机噪声；夜景 HDR 域 10%：运动/shot-read/强降噪/融合/bloom/tone 近似。
+#      两域、每样本参数与 seed 均可写入严格 JSON metadata 做回放。
 #   2. use_sharpener 概念取消 —— 原版把训练目标 USM 锐化，实测把天花板从 p_rel 8.340 压到 7.965
 #   3. 从已发布的 HYPIR_sd2.pth + _D.safetensors 续训，判别器不用从零预热
 #   4. mixed_precision 用 fp16，与推理端一致（推理实测 fp16 优于 bf16：57.93 vs 43.55 dB）
@@ -43,9 +44,13 @@ data_config:
     batch_transform:
       target: HYPIR.dataset.csig.CSIGBatchTransform
       params:
-        hq_key: jpeg
+        hq_key: image_bytes
         extra_keys: [txt]
         out_size: 512
+        profile: auto
+        profile_probs: {ordinary: 0.90, night_hdr: 0.10}
+        # 调试/造固定评估集时打开；常规训练关闭，避免在 batch 中长期保留 Python dict。
+        return_metadata: false
 
 use_ema: true
 ema_decay: 0.999

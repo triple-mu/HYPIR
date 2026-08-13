@@ -15,7 +15,11 @@ HYPIR 的 dataset 只吃一个 file_list，所以「配比」通过**按权重�
         --src 4klsdb=/path/4klsdb_list.txt:0.55 \\
         --src pd12m=/path/pd12m_list.txt:0.30 \\
         --src hdrplus=/path/hdrplus_list.txt:0.08 \\
-        --src shopsign=/path/shopsign_list.txt:0.07
+        --src shopsign=/path/shopsign_list.txt:0.07 \
+        --profile hdrplus=night_hdr
+
+输出仍兼容纯路径；带 profile 的条目写成 ``path<TAB>profile``，Dataset 会优先
+使用该标签，避免把 HDR+ 成品随机套入普通白天链路。
 """
 import argparse
 import random
@@ -26,18 +30,30 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--src", action="append", required=True,
                     help="名字=list路径:权重，可重复")
+    ap.add_argument("--profile", action="append", default=[],
+                    help="名字=ordinary|night_hdr；未指定的源由训练时 auto 采样")
     ap.add_argument("--total", type=int, default=0,
                     help="目标总条目数；0 表示按最大源自动定（不缩小任何源）")
     ap.add_argument("--seed", type=int, default=20260802)
     a = ap.parse_args()
 
+    profiles = {}
+    for item in a.profile:
+        name, value = item.split("=", 1)
+        if value not in ("ordinary", "night_hdr"):
+            raise ValueError("未知 profile: %s" % value)
+        profiles[name] = value
+
     srcs = {}
     for s in a.src:
         name, rest = s.split("=", 1)
         path, w = rest.rsplit(":", 1)
-        items = [l.strip() for l in open(path) if l.strip()]
+        items = [line.strip() for line in open(path) if line.strip()]
         assert items, "空 list: %s" % path
-        srcs[name] = {"items": items, "w": float(w)}
+        srcs[name] = {"items": items, "w": float(w), "profile": profiles.get(name)}
+    unknown_profiles = set(profiles) - set(srcs)
+    if unknown_profiles:
+        raise ValueError("--profile 引用了不存在的源: %s" % sorted(unknown_profiles))
 
     wsum = sum(v["w"] for v in srcs.values())
     for v in srcs.values():
@@ -58,6 +74,8 @@ def main():
             pool = v["items"][:]
             rng.shuffle(pool)
             picked += pool[:want - len(picked)]
+        if v["profile"]:
+            picked = [item.split("\t", 1)[0] + "\t" + v["profile"] for item in picked]
         out += picked
         print("%-10s %8d %8d %8.2f %8.1f%%" %
               (name, len(v["items"]), len(picked), reps, 100.0 * len(picked) / total))

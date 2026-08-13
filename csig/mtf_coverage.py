@@ -1,12 +1,14 @@
 """合成退化分布是否**逐频段**覆盖住真实退化。
 
-这是替代 coverage_check.py 的正确工具。之前用 FR/NR 两个标量判覆盖，
+这是比 coverage_check.py 更细的频域诊断。之前用 FR/NR 两个标量判覆盖，
 把不同频段的差异揉成一个数，得出了「匹配良好」的错误结论；实际用 1D MTF 一量，
 真实退化的等效倍率是 5.0-8.0，而当时的 SCALE_RANGE 是 (1.6, 7.0)——
 过半样本比真实轻，最重的真实样本还在分布之外。
 
-判据：对每个频率，看真实 MTF 落在合成 MTF 分布的第几百分位。
-落在 10-90 之间才算覆盖住；系统性地贴近 0 或 100 说明分布整体偏了。
+判据：对每个频率，看真实的线性等效传递落在合成分布的第几百分位。
+落在 10-90 之间才算覆盖住；系统性地贴近 0 或 100 说明分布整体偏了。自然图像上的
+负值及大于 1 的值通常意味着配准残差、tone/chroma 或内容相关非线性，因此必须逐 case
+报告，不能用三张平均值宣称全部覆盖。
 
     python csig/mtf_coverage.py --val <验证集目录> [--draws 60]
 """
@@ -22,20 +24,25 @@ import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, ".."))
-from degrade_vis import degrade
-from HYPIR.dataset.csig import (CSIGBatchTransform, SCALE_RANGE, POLE_RANGE,
-                                SIGMA_RANGE, P_RESAMPLE)
+from degrade_vis import degrade  # noqa: E402
+from HYPIR.dataset.csig import (  # noqa: E402
+    POLE_RANGE,
+    P_RESAMPLE,
+    SCALE_RANGE,
+    SIGMA_RANGE,
+    CSIGBatchTransform,
+)
 
 
 def mtf1d(gt, lq, axis=1):
     g = gt.mean(1)[0].double()
-    l = lq.mean(1)[0].double()
+    degraded = lq.mean(1)[0].double()
     if axis == 0:
-        g, l = g.T, l.T
+        g, degraded = g.T, degraded.T
     n = g.shape[-1]
     w = torch.hann_window(n, periodic=False, dtype=torch.float64, device=g.device)
     G = torch.fft.rfft((g - g.mean(-1, keepdim=True)) * w, dim=-1)
-    L = torch.fft.rfft((l - l.mean(-1, keepdim=True)) * w, dim=-1)
+    L = torch.fft.rfft((degraded - degraded.mean(-1, keepdim=True)) * w, dim=-1)
     return ((L * G.conj()).real.sum(0) / (G.abs() ** 2).sum(0).clamp(min=1e-30)).cpu().numpy()
 
 
@@ -53,6 +60,7 @@ def main():
     print("当前配方: SCALE_RANGE=%s  POLE_RANGE=%s  SIGMA_RANGE=%s  P_RESAMPLE=%.2f\n"
           % (SCALE_RANGE, POLE_RANGE, SIGMA_RANGE, P_RESAMPLE))
     all_pct = []
+    bad_counts = []
     for lqp in sorted(glob.glob(os.path.join(a.val, "*_lq.jpg"))):
         base = os.path.basename(lqp).replace("_lq.jpg", "")
         gtp = glob.glob(os.path.join(a.val, base + "_gt.*"))[0]
@@ -78,13 +86,19 @@ def main():
         print("  合成 P90  " + " ".join("%6.3f" % np.percentile(syn[:, i], 90) for i in idx))
         print("  真实落点  " + " ".join("%5.0f%%" % p for p in pct))
         bad = sum(1 for p in pct if p < 10 or p > 90)
+        bad_counts.append(bad)
         print("  -> %d/%d 个频点落在 10-90 分位之外 %s\n"
               % (bad, len(pct), "（覆盖不足）" if bad > len(pct) // 3 else "（可接受）"))
 
     m = np.array(all_pct).mean(0)
     print("三张平均的落点百分位: " + " ".join("%5.0f%%" % v for v in m))
-    lo = (m < 10).sum(); hi = (m > 90).sum()
-    if lo > len(m) // 3:
+    lo = (m < 10).sum()
+    hi = (m > 90).sum()
+    case_failures = sum(bad > len(probe) // 3 for bad in bad_counts)
+    if case_failures:
+        print("=> 部分覆盖：%d/%d 个 case 的越界频点超过 1/3；请按上面的逐 case 结果定位，"
+              "不能用平均值判定全覆盖" % (case_failures, len(bad_counts)))
+    elif lo > len(m) // 3:
         print("=> 真实 MTF 系统性低于合成分布：合成退化**太轻**，需调强（加大 SCALE/SIGMA）")
     elif hi > len(m) // 3:
         print("=> 真实 MTF 系统性高于合成分布：合成退化**太重**，需调弱")

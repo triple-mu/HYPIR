@@ -27,7 +27,7 @@ if run 4klsdb; then
   done
   hf download SingleBicycle/4KLSDB --repo-type dataset --local-dir "$ROOT/4klsdb" \
       $SH --include metadata.jsonl 2>&1 | tail -2
-  $PY "$HERE/tools/prep_4klsdb.py" "$ROOT/4klsdb/data" "$ROOT/4klsdb_hr" \
+  $PY "$HERE/prep_4klsdb.py" "$ROOT/4klsdb/data" "$ROOT/4klsdb_hr" \
       2>&1 | tee "$ROOT/logs/prep_4klsdb.log" | tail -3
   mv "$ROOT/4klsdb_list.txt" "$ROOT/lists/4klsdb.txt" 2>/dev/null || true
 fi
@@ -38,43 +38,46 @@ fi
 if run pd12m; then
   hf download Spawning/PD12M --repo-type dataset --local-dir "$ROOT/pd12m" \
       --include "metadata/*.parquet" 2>&1 | tail -1
-  CSIG=$ROOT $PY "$HERE/tools/prep_pd12m.py" index 2>&1 | tail -2
-  CSIG=$ROOT $PY "$HERE/tools/prep_pd12m.py" fetch --limit 15000 --workers 32 \
+  CSIG=$ROOT $PY "$HERE/prep_pd12m.py" index 2>&1 | tail -2
+  CSIG=$ROOT $PY "$HERE/prep_pd12m.py" fetch --limit 15000 --workers 32 \
       2>&1 | tee "$ROOT/logs/pd12m.log" | tail -2
   cp "$ROOT/data/pd12m_list.txt" "$ROOT/lists/pd12m.txt" 2>/dev/null || true
 fi
 
 # ---- L3a 计算摄影锚点：Google HDR+（CC BY-SA ⚠️ 传染性未决，占比宜低）--------
 if run hdrplus; then
-  $PY "$HERE/tools/dl_hdrplus.py" "$ROOT/hdrplus" 2>&1 | tail -2
-  $PY "$HERE/tools/screen_dir.py" "$ROOT/hdrplus" "$ROOT/lists/hdrplus.txt" --min-long 3000
+  $PY "$HERE/dl_hdrplus.py" "$ROOT/hdrplus" 2>&1 | tail -2
+  $PY "$HERE/screen_dir.py" "$ROOT/hdrplus" "$ROOT/lists/hdrplus.txt" --min-long 3000
 fi
 
 # ---- L3b 中文店招：ShopSign（需人工下载，见 README）--------------------------
 if run shopsign && [ -d "$ROOT/ShopSign_1265" ]; then
-  $PY "$HERE/tools/screen_dir.py" "$ROOT/ShopSign_1265" "$ROOT/lists/shopsign.txt" \
+  $PY "$HERE/screen_dir.py" "$ROOT/ShopSign_1265" "$ROOT/lists/shopsign.txt" \
       --copy-to "$ROOT/shopsign_hr"
 fi
 
 # ---- L3c 中文场景文字：CASIA-10K（需人工下载，见 README）---------------------
 if run casia && [ -d "$ROOT/CASIA-10k" ]; then
-  $PY "$HERE/tools/screen_dir.py" "$ROOT/CASIA-10k" "$ROOT/lists/casia10k.txt" \
+  $PY "$HERE/screen_dir.py" "$ROOT/CASIA-10k" "$ROOT/lists/casia10k.txt" \
       --copy-to "$ROOT/casia_hr"
 fi
 
 # ---- 评估集：从 4KLSDB 的 00118/00119 造 held-out 配对 -----------------------
 if run eval; then
-  $PY "$HERE/tools/build_eval.py" "$ROOT/4klsdb/data" "$ROOT/eval_p0" 2>&1 | tail -3
+  $PY "$HERE/build_eval.py" "$ROOT/4klsdb/data" "$ROOT/eval_p0" 2>&1 | tail -3
 fi
 
 # ---- 合并配比 ---------------------------------------------------------------
 if run mix; then
   ARGS=""
+  PROFILE_ARGS=""
   for kv in 4klsdb:0.55 pd12m:0.30 hdrplus:0.08 shopsign:0.05 casia10k:0.02; do
     n=${kv%%:*}; w=${kv##*:}
     [ -s "$ROOT/lists/$n.txt" ] && ARGS="$ARGS --src $n=$ROOT/lists/$n.txt:$w"
   done
-  $PY "$HERE/tools/build_mix.py" --out "$ROOT/lists/train_mix.txt" $ARGS
+  [ -s "$ROOT/lists/hdrplus.txt" ] && PROFILE_ARGS="--profile hdrplus=night_hdr"
+  $PY "$HERE/build_mix.py" --out "$ROOT/lists/train_mix.txt" \
+      $PROFILE_ARGS $ARGS
 fi
 
 echo "完成。训练用 file_list: $ROOT/lists/train_mix.txt"

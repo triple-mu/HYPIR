@@ -6,7 +6,12 @@
 
 零重叠保证：本脚本只用 EVAL_SHARDS 里的分片，训练集构建时会显式排除它们。
 """
-import io, os, re, sys, glob, json
+import glob
+import io
+import json
+import os
+import re
+import sys
 import numpy as np
 import pyarrow.parquet as pq
 from PIL import Image
@@ -82,13 +87,13 @@ def main(src, out):
             h, w = img.shape[:2]
             y, x = (h - CROP) // 2, (w - CROP) // 2      # 中心裁，去掉位置随机性
             gt = np.ascontiguousarray(img[y:y + CROP, x:x + CROP])
-            lq = degrade(gt, rng)                         # 固定 rng 序列 -> 可复现
+            lq, deg_meta = degrade(gt, rng, return_metadata=True)  # 固定 rng 序列 -> 可复现
             name = "%s_%03d.png" % (cat, i)
             cv2.imwrite(os.path.join(out, "gt", name), gt)
             cv2.imwrite(os.path.join(out, "lq", name), lq)
-            meta.append({"name": name, "cat": cat})
+            meta.append({"name": name, "cat": cat, "degradation": deg_meta})
     json.dump({"seed": SEED, "eval_shards": EVAL_SHARDS, "items": meta},
-              open(os.path.join(out, "meta.json"), "w"), indent=1)
+              open(os.path.join(out, "meta.json"), "w"), indent=1, allow_nan=False)
     print("各类产出:", {k: len(v) for k, v in got.items()}, flush=True)
     print("目标配比:", want, flush=True)
     print("合计 %d 对 -> %s" % (len(meta), out), flush=True)
