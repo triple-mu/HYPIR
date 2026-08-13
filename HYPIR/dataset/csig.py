@@ -355,7 +355,10 @@ class CSIGBatchTransform:
         hq = self._decode_crop(bufs, paths, metadata, device)
         if self.usm_sharpener is not None:
             self.usm_sharpener.to(hq)
-            hq = self.usm_sharpener(hq)
+            # USMSharp 末尾是 soft_mask*sharp + (1-soft_mask)*img，soft_mask 由 0/1 掩码
+            # 经高斯滤波得到，浮点误差会让它极微越过 1.0，结果随之略超 [0,1]。
+            # 官方 RealESRGAN 管线不校验所以从未暴露，而 TensorDegrader 的入口断言是严格的。
+            hq = self.usm_sharpener(hq).clamp_(0.0, 1.0)
         lq = self.degrader.apply(hq, metadata)
 
         result = {"GT": hq, "LQ": lq}
