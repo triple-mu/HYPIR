@@ -44,6 +44,8 @@ LOG=$CSIG/logs/$(basename "$OUT").log
 WD=$CSIG/logs/$(basename "$OUT")_watchdog.log
 
 FASTFAIL=0
+STALL=0
+PREV_CKPT=init
 for i in $(seq 1 200); do
     LAST=$(ls -d "$OUT"/checkpoint-* 2>/dev/null | sed 's/.*checkpoint-//' | sort -n | tail -1)
     if [ -n "$LAST" ] && [ "$LAST" -ge "$TARGET" ]; then
@@ -73,6 +75,20 @@ for i in $(seq 1 200); do
     RC=$?
     ELAPSED=$((SECONDS - T0))
     echo "[watchdog] $(date '+%F %T') 退出码 $RC，本次跑了 ${ELAPSED}s (最近 ckpt: ${LAST:-无})" >> "$WD"
+    # [csig] 只看单次时长挡不住「每次都跑够 180s 才崩」的循环：GT USM 越界那次
+    # 连续重启 7 次、每次约 8 分钟，全都躲过了 fastfail，白烧一小时。
+    # 真正的判据是 global_step 有没有推进 —— 三轮都停在同一个 ckpt 就是死循环。
+    NOW=$(ls -d "$OUT"/checkpoint-* 2>/dev/null | sed 's/.*checkpoint-//' | sort -n | tail -1)
+    if [ "${NOW:-none}" = "${PREV_CKPT:-init}" ]; then
+        STALL=$((STALL + 1))
+        if [ "$STALL" -ge 3 ]; then
+            echo "[watchdog] $(date '+%F %T') 连续 3 次未推进 global_step (停在 ${NOW:-无})，判定为死循环，停止。看 $LOG" >> "$WD"
+            exit 1
+        fi
+    else
+        STALL=0
+    fi
+    PREV_CKPT=${NOW:-none}
     # 起步就崩说明是配置/依赖问题，重试 200 次只是把同一个错误刷 100 分钟。
     # 正常一次启动至少要编译 + 跑若干步，不可能 3 分钟内退出。
     if [ "$ELAPSED" -lt 180 ]; then
