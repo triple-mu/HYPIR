@@ -26,6 +26,8 @@ import numpy as np
 import torch
 
 from torch.utils.data import Dataset
+
+from HYPIR.dataset.utils import USMSharp
 from torchvision.io import ImageReadMode, decode_image, decode_jpeg
 
 from HYPIR.dataset import csig_degradation as _degradation
@@ -198,6 +200,7 @@ class CSIGBatchTransform:
         profile: str = "auto",
         profile_probs: Optional[Mapping[str, float]] = None,
         return_metadata: bool = False,
+        use_sharpener: bool = False,
         seed: Optional[int] = None,
         device: Optional[str] = None,
     ) -> None:
@@ -210,6 +213,13 @@ class CSIGBatchTransform:
         self.use_hflip = bool(use_hflip)
         self.profile = profile
         self.return_metadata = bool(return_metadata)
+        # [csig-usm] 对 GT 做 USM 锐化，与 RealESRGANBatchTransform 的 use_sharpener 逐行等价
+        # （先锐化 hq，再从锐化后的 hq 生成 lq，所以 LQ 也带锐化痕迹 —— 官方就是这个顺序）。
+        # 依据：本管线取消 GT USM 后，MANIQA 在两个域上分别掉 -0.0710(t=-14.24) 与
+        # -0.0449(t=-13.29)，模型学会忠实还原而不加锐化；而 MANIQA 在赛题公式里权重 4.477。
+        # 线上证据同向：drt(开 sharpener) 59.4010 vs P3/P4(关) 20.76。
+        self.use_sharpener = bool(use_sharpener)
+        self.usm_sharpener = USMSharp() if self.use_sharpener else None
         self.device_override = device
         self.config = DEFAULT_CONFIG.with_profile_probs(profile_probs)
         self.sampler = DegradationSampler(seed=seed, config=self.config)
@@ -343,6 +353,9 @@ class CSIGBatchTransform:
         )
         device = self._device()
         hq = self._decode_crop(bufs, paths, metadata, device)
+        if self.usm_sharpener is not None:
+            self.usm_sharpener.to(hq)
+            hq = self.usm_sharpener(hq)
         lq = self.degrader.apply(hq, metadata)
 
         result = {"GT": hq, "LQ": lq}
